@@ -1,0 +1,144 @@
+javascript深拷贝
+
+貌似我博客还有另外两个类似的函数，不过年代比较久远了，随着我技术的提高，更好的函数被创造出来。突然问起我以前的函数，我也会愣一下，心想，真烂！我总是喜欢把最好的东西分享给大家的，以前的大家忘掉吧。
+
+我们先看一下浅复制的缺陷，不知多少人中过招呢？
+
+var oOriginal = {
+  memNum: 1,                                      // number
+  memStr: "I am a string",                      // string
+  memObj: {
+    test1: "Old value"                              // we’ll test
+  },
+  memArr: [                                         // array 
+    "a string",                                       // string member of array
+    {                                                   // object member of array
+      test2: "Try changing me"                 // we'll test
+    }
+  ]
+};
+
+这是一个比较复杂的对象，对象包含着对象与数组。我们用Prototype著名的继承函数复杂一下。它那个东东实在很难说是继承，jQuery的也不算。
+
+var extend = function(result, source) {
+  for (var key in source)
+    result[key] = source[key];
+  return result;
+}
+测试程序：
+
+var oCopy = extend({},oOriginal);                     // 浅拷贝
+oCopy.memObj.test1 = "New value";                     // 出现问题了，会反射到原对象上
+alert(oOriginal.memObj.test1);                        // 结果副本与原本都一同被修改了
+oCopy.memArr[1].test2 = "I am changed";
+alert(oOriginal.memArr[1].test2);                      // 同样中招了
+
+
+
+看来如果不想修改原对象，我们需要特殊处理一下对象与数组。为了处理它们，我们就必须把它们识别出来。看下面函数：
+/**
+ * type identification - By 司徒正美::cheng (MIT Licensed)
+ * http://www.cnblogs.com/rubylouvre/archive/2010/01/20/1652646.html
+ */
+	var is = function (obj,type) {
+	  var toString = Object.prototype.toString,undefined;
+	  return (type === "Null" && obj === null) ||
+	    (type === "Undefined" && obj === undefined ) ||
+	    toString.call(obj).slice(8,-1) === type;
+	};
+上面的函数是用于进行类型识别的，typeof是不可靠的，Array会返回"object"，instanceof也不行，它无法判定另一个文档对象的Array实例。利用Object.prototype.toString.call虽然不是尽善尽美，鸭子类型嘛，很容易仿造，但总比以前的靠谱多了。
+
+下面正式进入主题，我们的深拷贝函数会特殊处理值为对象与数组的键值对，对于它们，程序会为目标对象先创建一个新对象与数组，然后再一层层拷下去。我们可以看到它并没有用hasOwnProperty，换言之，连原型中可遍历的属性都给它翻个底朝天。对于数组，我们不用for(,,,)循环，它只能循环括号中的元素，无法循环附在数组上的其他属性，因此这里还是需要for...in这个特慢的方法。由于深拷贝把所有属性都进行检测，中间还可能创建新对象，因此是个巨重型的方法。无事就别用。
+
+/**
+ * type identification - By 司徒正美::cheng (MIT Licensed)
+ * http://www.cnblogs.com/rubylouvre/archive/2010/03/26/1696600.html
+ */
+ 
+	dom.deepCopy = function(result, source){
+		for(var key in source) {
+		  var copy = source[key];
+		  if(source === copy) continue;//如window.window === window，会陷入死循环，需要处理一下
+		  if(dom.is(copy,"Object")){
+		    result[key] = arguments.callee(result[key] || {}, copy);
+		  }else if(dom.is(copy,"Array")){
+		    result[key] = arguments.callee(result[key] || [], copy);
+		  }else{
+		    result[key] = copy;
+		  }
+		}
+		return result;
+	};
+
+
+
+
+<!-- 文章二 -->
+
+要实现深复制有很多办法，比如最简单的办法有：
+
+var cloneObj = JSON.parse(JSON.stringify(obj));
+上面这种方法好处是非常简单易用，但是坏处也显而易见，这会抛弃对象的constructor，也就是深复制之后，无论这个对象原本的构造函数是什么，在深复制之后都会变成Object。另外诸如RegExp对象是无法通过这种方式深复制的。
+
+所以这里我将介绍一种，我自认为很优美的深复制方法，当然可能也存在问题。如果你发现了我的实现方法有什么问题，请及时让我知道~
+
+先决条件：
+1. 对于任何对象，它可能的类型有Boolean, Number, Date, String, RegExp, Array 以及 Object（所有自定义的对象全都继承于Object）
+2. 我们必须保留对象的构造函数信息（从而使新对象可以使用定义在prototype上的函数）
+
+最重要的一个函数：
+
+Object.prototype.clone = function () {
+    var Constructor = this.constructor;
+    var obj = new Constructor();
+
+    for (var attr in this) {
+        if (this.hasOwnProperty(attr)) {
+            if (typeof(this[attr]) !== "function") {
+                if (this[attr] === null) {
+                    obj[attr] = null;
+                }
+                else {
+                    obj[attr] = this[attr].clone();
+                }
+            }
+        }
+    }
+    return obj;
+};
+定义在Object.prototype上的clone()函数是整个方法的核心，对于任意一个非js预定义的对象，都会调用这个函数。而对于所有js预定义的对象，如Number,Array等，我们就要实现一个辅助clone()函数来实现完整的克隆过程：
+
+/* Method of Array*/
+Array.prototype.clone = function () {
+    var thisArr = this.valueOf();
+    var newArr = [];
+    for (var i=0; i<thisArr.length; i++) {
+        newArr.push(thisArr[i].clone());
+    }
+    return newArr;
+};
+
+/* Method of Boolean, Number, String*/
+Boolean.prototype.clone = function() { return this.valueOf(); };
+Number.prototype.clone = function() { return this.valueOf(); };
+String.prototype.clone = function() { return this.valueOf(); };
+
+/* Method of Date*/
+Date.prototype.clone = function() { return new Date(this.valueOf()); };
+
+/* Method of RegExp*/
+RegExp.prototype.clone = function() {
+    var pattern = this.valueOf();
+    var flags = '';
+    flags += pattern.global ? 'g' : '';
+    flags += pattern.ignoreCase ? 'i' : '';
+    flags += pattern.multiline ? 'm' : '';
+    return new RegExp(pattern.source, flags);
+};
+可能直接定义在预定义对象的方法上，让人感觉会有些问题。但在我看来这是一种优美的实现方式。
+
+同时我也在开发一个插件，主要的思想也就是扩展预定义对象的方法。
+这个插件叫JustJS（Github项目地址）
+有以下一些特性： 1. 同时支持Web前端和node.js使用。
+2. 直接对预定义对象的方法进行扩展 3. 使用 J(function(){...}) 语句块，决不污染全局命名空间。
+目前只写了一小部分，同时也写了些简单的文档，有兴趣的同学可以看一下，也可以加入我，Fork我的项目，喜欢的同学还可以给Star！

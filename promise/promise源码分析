@@ -1,0 +1,156 @@
+promise源码分析
+
+
+------------------------------------------------------------------------------------------------------
+原始方法
+setTimeout(function(){
+    var a=100;
+    console.log(a);
+    setTimeout(function () {
+        var b=200;
+        console.log(b)
+        setTimeout(function () {
+            var c=300;
+            console.log(c)
+        }, 1000);
+    }, 1000);
+},1000);   
+
+
+
+------------------------------------------------------------------------------------------------------
+promise实现
+new Promise(function (resolve, reject) {
+    setTimeout(function () {
+        var a=100;
+        resolve(a);
+    }, 1000);
+}).then(function (res) {
+    console.log(res);
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            var b=200;
+            resolve(b);
+        }, 1000);
+    })
+}).then(function (res) {
+    console.log(res);
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            var c=300
+            resolve(c);
+        }, 1000);
+    })
+}).then(function (res) {
+
+    console.log(res);
+})
+
+
+------------------------------------------------------------------------------------------------------
+如何让你的promise能有此魔力
+    让a,b,c的值能在then里面的回调接收到；
+    在连续调用异步，如何确保异步函数的执行顺序
+
+如何让异步的value在thenable函数中拿到
+    将resolve/reject函数和onfulfiled/onrejected放入同一个对象(promise对象)里面,resolve/reject的时候将value设置this.value=xxx。onfulfiled/onrejected执行的时候呢,onfulfiled(this.value)即可
+
+如何处理链式的promise且保证顺序
+    每个promise后面链一个对象该对象包含onfulfiled,onfulfiled,子promise三个属性.当父promise 状态改变完毕,执行完相应的onfulfiled/onfulfiled的时候呢，拿到子promise,在等待这个子promise状态改变，在执行相应的onfulfiled/onfulfiled。依次循环直到当前promise没有子promise
+
+
+------------------------------------------------------------------------------------------------------
+
+	/*
+    我们要满足状态只能三种状态：PENDING,FULFILLED,REJECTED三种状态，且状态只能由PENDING=>FULFILLED,或者PENDING=>REJECTED
+    */
+    var PENDING = 0;
+    var FULFILLED = 1;
+    var REJECTED = 2;
+    /*
+    value状态为执行成功事件的入参，deferreds保存着状态改变之后的需要处理的函数以及promise子节点，构造函数里面应该包含这三个属性的初始化
+     */
+    function Promise(callback) {
+        this.status = PENDING;
+        this.value = null;
+        this.defferd = [];
+        setTimeout(callback.bind(this, this.resolve.bind(this), this.reject.bind(this)), 0);
+    }
+    
+    Promise.prototype = {
+        constructor: Promise,
+        //触发改变promise状态到FULFILLED
+        resolve: function (result) {
+            this.status = FULFILLED;
+            this.value = result;
+            this.done();
+        },
+        //触发改变promise状态到REJECTED
+        reject: function (error) {
+            this.status = REJECTED;
+            this.value = error;
+        },
+        //处理defferd
+        handle: function (fn) {
+            if (!fn) {
+                return;
+            }
+            var value = this.value;
+            var t = this.status;
+            var p;
+            if (t == PENDING) {
+                 this.defferd.push(fn);
+            } else {
+                if (t == FULFILLED && typeof fn.onfulfiled == 'function') {
+                    p = fn.onfulfiled(value);
+                }
+                if (t == REJECTED && typeof fn.onrejected == 'function') {
+                    p = fn.onrejected(value);
+                }
+            var promise = fn.promise;
+            if (promise) {
+                if (p && p.constructor == Promise) {
+                    p.defferd = promise.defferd;
+                } else {
+                    p = this;
+                    p.defferd = promise.defferd;
+                    this.done();
+                }
+            }
+            }
+        },
+        //触发promise defferd里面需要执行的函数
+        done: function () {
+            var status = this.status;
+            if (status == PENDING) {
+                return;
+            }
+            var defferd = this.defferd;
+            for (var i = 0; i < defferd.length; i++) {
+                this.handle(defferd[i]);
+            }
+        },
+        /*储存then函数里面的事件
+        返回promise对象
+        defferd函数当前promise对象里面
+        */
+        then: function (success, fail) {
+           var o = {
+                onfulfiled: success,
+                onrejected: fail
+            };
+            var status = this.status;
+            o.promise = new this.constructor(function () {
+    
+            });
+            if (status == PENDING) {
+                this.defferd.push(o);
+            } else if (status == FULFILLED || status == REJECTED) {
+                this.handle(o);
+            }
+            return o.promise;
+        }
+    };
+
+
+

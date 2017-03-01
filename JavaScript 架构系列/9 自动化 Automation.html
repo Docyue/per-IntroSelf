@@ -1,0 +1,179 @@
+自动化 Automation
+目录
+1. 简介
+1.1 战报
+1.2 神鹰的攻击
+2. 猪偷走了什么？
+3. Grunt
+3.1 入门指南
+3.2 Grunt 资源
+4. Twitter Bower
+4.1 Bower 资源
+5. Yeoman
+6. 攻击！
+7. 结论
+19 April 2013
+原文：Angry Birds of JavaScript: Mighty Eagle - Automation
+1. 简介 ⬆
+
+一群无法无天的猪从无辜的小鸟那里偷走了所有的前端架构，现在小鸟们要把它们夺回来！一队特殊的小鸟英雄将攻击这些卑鄙的猪，直到夺回原本属于它们的前端 JavaScript 架构！
+小鸟们最终会成功吗？它们会打败那些培根味儿的敌人吗？让我们一起揭示JavaScript之愤怒的小鸟系列的另一个扣人心弦的章节！
+
+1.1 战报 ⬆
+Red Bird - IIFE
+Blue Bird - Events
+Yellow Bird - RequireJS
+Black Bird - Backbone
+White Bird - Linting
+Green Bird - Mocking
+Orange Bird - Templating
+Big Brother Bird - Patterns
+
+1.2 神鹰的攻击 ⬆
+在这篇文章中，我们将看看使用超级武器的神鹰，它用一套工具快速组织和部署其他小鸟到征服猪群的战斗中。渐渐的，小鸟们将一个接一个的夺回属于它们的东西！
+
+2. 猪偷走了什么？ ⬆
+随着时间的推移，小鸟们拿出了 RequireJS（黄鸟）、JSHint（白鸟）、Mustache（橙鸟）以及一堆其他伟大的工具，然后所有任务都需要一个命令行任务来完成。这很烦人，因为你不得不记住运行每个工具所需的事情。此外，很容易在关键时刻时忘记运行这些工具来更新 Web 应用。值得庆幸的是，有一天神鹰引入了一些工具让事情变得稍微容易一些。神鹰用 Grunt 和 Bowser 自动执行常见任务，并让项目可以很容易的引入必需的常用库。
+
+However, during a recent invasion the pigs stole the birds' Gang of Foul book! As a result, one of the Big Brother Birds has been tasked to reclaim what has been stolen. He will use his overwhelming power of trickery to help destroy the pigs in order to take back what is theirs.
+
+译注：这段原文应该有错误，本文介绍的是神鹰的自动化工具，不是大鸟哥的设计模式和有限自动机，因此暂不翻译。
+
+3. Grunt ⬆
+Grunt 是一个基于任务的命令行工具，用 JavaScript语言编写，用于自动执行前端应用的构建过程。社区被这个工具深深吸引，并产出了大量插件可供选择，例如自动化 CoffeeScript 编译、Handlebars 预编译、Less 支持、JSHint 检查等等...
+
+事实上已经有几个大型项目在使用 Grunt 辅助自动执行构建过程以及其他任务，例如 Twitter、jQuery、Modernizr、Sauce Labs 等。
+
+3.1 入门指南 ⬆
+首选，你需要在 node 中用下面的命令安装 Grunt...
+
+npm install -g grunt-cli grunt-init
+
+安装 Grun 之后，每个项目需要两个主要的文件：
+
+Gruntfile.js
+package.json
+Gruntfile.js ⬆
+
+你可以从头创建自己的 Gruntfile.js，也可以从文件中拷贝一份初始 Gruntfile.js，或者使用项目脚手架 grunt-init gruntfile。如何安装脚手架请参阅 Grunt 的项目脚手架页面的介绍。下面的 Gruntfile.js 示例来自 Grunt 的入门指南页面...
+
+module.exports = function(grunt) {
+    // Project configuration.
+    grunt.initConfig({
+        pkg: grunt.file.readJSON('package.json'),
+        uglify: {
+            options: {
+                banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+            },
+            build: {
+                src: 'src/<%= pkg.name %>.js',
+                dest: 'build/<%= pkg.name %>.min.js'
+            }
+        }
+    });
+    
+    // Load the plugin that provides the "uglify" task.
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    
+    // Default task(s).
+    grunt.registerTask('default', ['uglify']);
+};
+
+package.json ⬆
+
+package.json 描述了项目名称、版本，以及可能有的依赖，例如 Grunt 和 Grunt 插件。你可以从 Grunt 的入门指南页面拷贝一份 package.json 示例...（如下所示）
+
+{
+    "name": "my-project-name",
+    "version": "0.1.0",
+    "devDependencies": {
+        "grunt": "~0.4.1",
+        "grunt-contrib-jshint": "~0.1.1",
+        "grunt-contrib-nodeunit": "~0.1.2"
+    }
+}
+
+Grunt 插件 ⬆
+
+现在一切就绪，你可以使用一整套插件开始自动执行任务。这里有几个有趣的插件，你可以会喜欢...
+
+grunt-contrib-coffee - 把 CoffeeScript 编译为 JavaScript
+grunt-contrib-compass - 把 Compass 编译为 CSS
+grunt-contrib-concat - 合并文件
+grunt-contrib-connect - 启动一个 Web 服务
+grunt-contrib-csslint - 检查 CSS 文件
+grunt-contrib-handlebars - 预编译 Handlebar 模板
+grunt-contrib-htmlmin - 压缩 HTML 代码
+grunt-contrib-imagemin - 演说 PNG 和 JPEG 图片
+grunt-contrib-jshint - 用 JSHint 检查文件
+grunt-contrib-less - 把 LESS 编译为 CSS
+grunt-contrib-nodeunit - 运行 Nodeunit 单元测试
+grunt-contrib-watch - 当文件发生变化时运行与定义任务
+grunt-contrib-requirejs - 使用 r.js 优化 RequireJS 项目
+grunt-contrib-uglify - 用 UglifyJS 压缩文件
+grunt-contrib-yuidoc - 编译 YUIDocs 文档
+... more ...
+jQuery 的 Gruntfile ⬆
+
+我从 GitHub 上拉去了一份 jQuery，用来查看 jQuery 是如何使用 Grunt 的，下面是执行 Grunt 时得到的输出。
+
+If you look closely you'll notice they update their git submodules, build a version of jQuery from it's modules, run JSHint against the built jquery.js and tests files, creates sourcemaps, and runs a special compare file size task. If you dig deep into their Gruntfile you'll find they've also setup a custom way to run their unit tests against Browserstack, which is pretty cool if you ask me ;) 如果你仔细上面的图看会发现执行了以下任务：更新 Git 子模块（Sizzle、QUnit），构建 jQuery 的一个版本，对构建的 jquery.js 执行 JSHint 检查，创建 Source Maps，并运行一个比较指定的文件大小的任务。如果你深挖 Gruntfile.js 的话，你还会发现它自定义了一种不同于 Browserstack 的方式来运行单元测试。
+
+译注：JavaScript Source Map 详解, Source Map Revision 3 Proposal, Introduction to JavaScript Source Maps, BrowserStack
+
+Modernizr 的 Gruntfile ⬆
+
+我用同样的方式拉取了 Modernizr 库，然后输入 grunt qunit 观察它的 746 项单元测试的测试过程，并在 369ms 内测试通过，测试使用了无界面的浏览器引擎 PhantomJS。
+
+译注：PhantomJS, PhantomJS 中文主页
+
+3.2 Grunt 资源 ⬆
+这篇文章的目的不是教你了解 Grunt，而是为了让你意识到它的存在，如果你还不知道的话。这个一个非常棒的工具，用来帮助你自动化所有前端事务。参阅下面的资源，可以帮助你理解如何开始...
+
+译注：知其意而不能言其意，汗颜呐。
+The Grunt Basics by Cary Landholt (@carylandholt)
+Grunt.js Workflow by Merrick Christensen (@iammerrick)
+Meet Grunt: The Build Tool for JavavScript by Andrew Burgess (@andrew8088)
+
+4. Twitter Bower ⬆
+译注：bower - 凉亭，树阴处
+
+使用 Node 或 Ruby 的开发人员可能已经熟悉了 npm 或 gems，但是对于浏览器脚本和样式没有类似的工具...至少到目前为止！
+
+Twitter Bower 项目旨在通过 Web（HTML、CSS 和 JavaScript）提供一套包管理器来解决这个问题。
+
+npm install -g bower
+
+安装 Bower 之后你就可以开始下载库！，例如，我们想拉去最新版本的 jQuery，只需要运行 bower install jquery，然后你会看到下面的输出...
+
+
+
+4.1 Bower 资源 ⬆
+如果想更多的了解 Bower，建议去看看下面的这些好资源。
+
+Meet Bower: A Package Manager For The Web by Andrew Burgess (@andrew8088)
+A RequireJS, Backbone, and Bower Starter Template by Jeffrey Way (@jeffrey_way)
+
+5. Yeoman ⬆
+译注：yeoman - 自耕农，自由民，仆人
+
+Yeoman 项目是一款与 Grunt 和 Bower 协同工作的脚手架引擎。可以让你的应用快速运行起来。要使用 Yeoman，你需要先用下面的语法安装它...
+1
+npm install -g yo grunt-cli bower 
+
+Yeoman 安装之后，你可以生成各种不同类型的项目。在下面的的截图中，我用 Yeoman 创建了一个 Web 应用。在按我的需求订制应用的过程中，它会问几个问题。
+
+还有其他的脚手架，例如 Backbone、AngularJS 等，你可以安装它们，然后开始你的项目。可以在 Yeoman 的 GitHub 页面看到更多的生成器列表。
+
+例如在下面的截图中，我先创建了一个新的 Backbone 应用，然后立即创建了一个新的 bird 模型。 
+
+Yeoman 目前是 1.0 测试版，网站上说在 Windows 下有一些问题。虽然我已经能用它做一些扩展，但是我敢肯定有一些计划完全支持的功能尚不支持。
+
+6. 攻击！ ⬆
+下面是一个用 boxbox 构建的简版 Angry Birds，boxbox 是一个用于 box2dweb 的框架，由 Bocoup 的 Greg Smith 编写。
+按下空格键来发射神鹰，你也可以使用方向键。
+
+7. 结论 ⬆
+拥抱 Grunt、Bower 和 Yeoman 可以帮助自动化开发、测试、部署过程中的各个环节。这些工具的社区非常活跃，你可以在上面找到满足你应用需求的插件。
+
+@sunnylost 补充：Dun, dun, daaaaaaaaaa! 应该是在模拟背景音乐，类似于这种 http://missingno.ocremix.org/musicpages/game_on.html

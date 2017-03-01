@@ -1,0 +1,125 @@
+移动端重构系列12——popup
+
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+popup分为两种：一种是内容比较多，直接以全屏显示，如图一；一种是少量内容的popup提示，如图二
+
+
+pop pagepop over
+
+先上demo：
+
+popup测试
+
+popup page
+
+第一种形式，设计结构如下：
+
+<header class="header"></header>
+<div class="wrap-page">
+    <section class="page"></section>
+    ...
+</div>
+<footer class="footer"></footer>
+<section class="popup-page">
+    <div class="popup-hd"><span class="btn-close"></span></div>
+    <div class="popup-bd"></div>
+</section>
+因为这种形式内容可能会比较长，有可能会有滚动效果，所以头部（含有关闭按钮）采用固定，动画设计使用translate偏移和opacity来搞定，这里用的是从下面进入视觉范围。通过添加删除active这个class来控制元素显示隐藏，
+
+scss代码如下：
+
+.popup-page{
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    background-color: #fff;
+    padding-top: 35px;
+    z-index: $zIndexOverlay + 5;
+    @include translate3d(0, 100%, 0);
+    @extend %transition-transform;
+
+    &.active{
+        opacity: 1;
+        @include translate3d(0, 0, 0);
+    }
+    .popup-hd{
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        height: 35px;
+        line-height: 35px;
+        border-bottom: 1px solid $primary;
+        padding-left: 10px;
+        .btn-close{
+            position: absolute;
+            right: 0;
+            top: 0;
+            font-size: 30px;
+            width: 35px;
+            text-align: center;
+            cursor: pointer;
+            &:active,&:hover{
+                background-color: $primary;
+                color: #fff;
+            }
+        }
+    }
+    .popup-bd{
+        padding: 10px;
+        height: 100%;
+        @extend %scroll-touch;
+        p{
+            margin-bottom: 10px;
+        }
+    }
+}
+popup over
+
+设计结构如下：
+
+<header class="header"></header>
+<div class="wrap-page">
+    <section class="page"></section>
+    ...
+</div>
+<footer class="footer"></footer>
+<div class="overlay"><section class="popup-over"></section></div>
+这种的首先得计算定位，这次动画采用scale和opacity来搞定，同样通过添加删除active这个class来控制元素显示隐藏
+
+.popup-over{
+    background-color: #fff;
+    border-radius: 8px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    padding: 10px;
+    z-index: $zIndexOverlay + 5;
+    opacity: 0;
+    @include transform(translate3d(0, 0, 0) scale(0.815));
+    @extend %transition-transform;
+
+    &.active {
+      opacity: 1;
+      @include transform(translate3d(0, 0, 0) scale(1));
+    }
+    &::before{
+        @include triangle(top, 10px, #fff);
+        position: absolute;
+        left: 50%;
+        top: -10px;
+        margin-left: -10px;
+    }
+}
+总结
+
+使用transition动画的时候，在动画开始之前先得确保display为非none状态，然后动画结束之后有个transtionend事件可以调用，demo中的overlay的隐藏就是这个调用了这个事件
+
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-popup.html

@@ -1,0 +1,69 @@
+####es6系列----函数
+// Arrows 箭头函数
+// Generators 生成器
+
+-------------------------------------------------------------------------------------
+Arrows 箭头函数
+-------------------------------------------------------------------------------------
+箭头函数是使用=>语法的函数简写形式。这在语法上与 C#、Java 8 和 CoffeeScript 的相关特性非常相似。它们同时支持表达式体和语句体。与（普通的）函数所不同的是，箭头函数和其上下文中的代码共享同一个具有词法作用域的this。
+
+	// 表达式体
+	var odds = evens.map(v => v + 1);
+	var nums = evens.map((v, i) => v + i);
+	var pairs = evens.map(v => ({even: v, odd: v + 1}));
+
+	// 语句体
+	nums.forEach(v => {
+	  if (v % 5 === 0)
+	    fives.push(v);
+	});
+
+	// 具有词法作用域的 this
+	var bob = {
+	  _name: "Bob",
+	  _friends: ["Amy", "Bob", "Cinne", "Dylan", "Ellen"],
+	  printFriends() {
+	    this._friends.forEach(f =>
+	      console.log(this._name + " knows " + f));
+	  }
+	}
+PS:	
+当我们使用箭头函数时，函数体内的this对象，就是定义时所在的对象，而不是使用时所在的对象。并不是因为箭头函数内部有绑定this的机制，实际原因是箭头函数根本没有自己的this，它的this是继承外面的，因此内部的this就是外层代码块的this。
+
+-------------------------------------------------------------------------------------
+Generators 生成器
+-------------------------------------------------------------------------------------
+生成器通过使用function*和yield简化迭代器的编写， 形如function*的函数声明返回一个生成器实例，生成器是迭代器的子类型，迭代器包括附加的next和throw，这使得值可以回流到生成器中，所以，yield是一个返回或抛出值的表达式形式。
+
+	var fibonacci = {
+	  [Symbol.iterator]: function*() {
+	    var pre = 0, cur = 1;
+	    for (;;) {
+	      var temp = pre;
+	      pre = cur;
+	      cur += temp;
+	      yield cur;
+	    }
+	  }
+	}
+
+	for (var n of fibonacci) {
+	  // truncate the sequence at 1000
+	  if (n > 1000)
+	    break;
+	  console.log(n);
+	}
+生成器接口如下(此处使用TypeScript 的类型语法，仅用于阐述问题)：
+	interface Generator extends Iterator {
+	    next(value?: any): IteratorResult;
+	    throw(exception: any);
+	}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,601 @@
+####es6系列----对象的扩展
+// 属性的简洁表示法
+// Object.is()
+// 使用 Object.assign() 合并对象
+// 属性的可枚举性
+// 属性的遍历
+// __proto__属性，Object.setPrototypeOf()，Object.getPrototypeOf()
+// Object.keys()，Object.values()，Object.entries() 
+// Classes 类
+// enhanced object literals 增强的对象字面量
+-------------------------------------------------------------------------------------
+一、属性的简洁表示法
+-------------------------------------------------------------------------------------
+1、ES6允许直接写入变量和函数，作为对象的属性和方法。这样的书写更加简洁
+	var foo = 'bar';
+	var baz = {foo};
+	baz // {foo: "bar"}
+
+	// 等同于
+	var baz = {foo: foo};
+
+2、上面代码表明，ES6允许在对象之中，直接写变量。这时，属性名为变量名, 属性值为变量的值。
+	function f(x, y) {
+	  return {x, y};
+	}
+
+	// 等同于
+	function f(x, y) {
+	  return {x: x, y: y};
+	}
+
+	f(1, 2) // Object {x: 1, y: 2}
+3、除了属性简写，方法也可以简写。
+	var o = {
+	  method() {
+	    return "Hello!";
+	  }
+	};
+
+	// 等同于
+	var o = {
+	  method: function() {
+	    return "Hello!";
+	  }
+	};
+例：用于函数的返回值
+	var birth = '2000/01/01';
+	var Person = {
+	  name: '张三',
+	  //等同于birth: birth
+	  birth,
+	  // 等同于hello: function ()...
+	  hello() { console.log('我的名字是', this.name); }
+
+	};
+例：用于CommonJS模块输出变量
+	var ms = {};
+	function getItem (key) {
+	  return key in ms ? ms[key] : null;
+	}
+
+	function setItem (key, value) {
+	  ms[key] = value;
+	}
+	function clear () {
+	  ms = {};
+	}
+	module.exports = { getItem, setItem, clear };
+	// 等同于
+	module.exports = {
+	  getItem: getItem,
+	  setItem: setItem,
+	  clear: clear
+	};
+例：如果某个方法的值是一个Generator函数，前面需要加上星号
+	var obj = {
+	  * m(){
+	    yield 'hello world';
+	  }
+	};
+
+-------------------------------------------------------------------------------------
+二、Object.is()
+-------------------------------------------------------------------------------------
+ES5比较两个值是否相等，只有两个运算符：相等运算符（==）和严格相等运算符（===）。它们都有缺点，前者会自动转换数据类型，后者的NaN不等于自身，以及+0等于-0。JavaScript缺乏一种运算，在所有环境中，只要两个值是一样的，它们就应该相等。
+ES6提出“Same-value equality”（同值相等）算法，用来解决这个问题。Object.is就是部署这个算法的新方法。它用来比较两个值是否严格相等，与严格比较运算符（===）的行为基本一致。
+	Object.is('foo', 'foo')
+	// true
+	Object.is({}, {})
+	// false
+
+不同之处只有两个：一是+0不等于-0，二是NaN等于自身。
+	+0 === -0 //true
+	NaN === NaN // false
+
+	Object.is(+0, -0) // false
+	Object.is(NaN, NaN) // true
+
+ES5可以通过下面的代码，部署Object.is。
+	Object.defineProperty(Object, 'is', {
+	  value: function(x, y) {
+	    if (x === y) {
+	      // 针对+0 不等于 -0的情况
+	      return x !== 0 || 1 / x === 1 / y;
+	    }
+	    // 针对NaN的情况
+	    return x !== x && y !== y;
+	  },
+	  configurable: true,
+	  enumerable: false,
+	  writable: true
+	});
+
+
+-------------------------------------------------------------------------------------
+三、Object.assign() 合并对象
+-------------------------------------------------------------------------------------
+从一个对象复制所有的属性到另一个对象是一个常见的操作。这篇文章介绍了 ECMAScript 6 中的实现，被称作 Object.assign() 。
+
+这个合并操作在 JavaScript 生态系统中有一个专属名称，叫做: 'extend'(不幸的是，与经典的 OOP 属于是冲突的)。下面提供了两个中对于 'extend' 的实现：
+
+    Prototype: Object.extend(destination, source) 。Prototype 是第一个使用 'extend' 这个名称的库。
+    Underscore.js: _.extend(destination, *sources)
+
+1. Object.assign()
+-------------------------------------------------------------------------------------
+	对于合并对象操作， ECMAScript 6 中提供了一个函数：
+	Object.assign(target, source);
+
+	这个方法会将所有可枚举 [1] 的自由属性从 source 复制到 target 。并且它返回(修改后的) target 。关于这个函数最终签名至今还在争论，最终还有可能支持多个来源(被复制的对象)。即便是使用简单的签名(signature)，也可以处理多个来源，使用 Array.prototype.reduce ：
+
+	[source1, source2 source3].reduce(Object.assign, target);
+
+	1.1 属性名：字符串或者符号
+	在 ECMAScript 6中，属性名称可以是字符串或者 符号 (symbols)。后者是一种新的唯一标识符；基本上使用符号作为属性名是不可能有命名冲突的。 Object.assign() 支持字符串或者符号作为属性名。原文中叫做: property keys, 表示对象的键，属性就干脆译作属性名。
+
+	1.2 复制与赋值
+	目标对象中的属性是通过赋值操作创建的(内置的[[Put]]操作)。这就意味着如果 target 拥有(自身或者继承的) setters [1] ，这回在复制的过程中调用。一种可替代的方式就是定义新的属性 [2] ，总是创建新的自由属性而从不调用 setters。原本对于 Object.assign() 的一个变体的提议就是使用定义替代赋值的方式。但是该提议被 ECMAScript 6 拒绝了(在后续新版中可能会重新考虑)。
+2. Object.assign() 用例
+-------------------------------------------------------------------------------------
+	2.1 设置实例属性
+	构造器的任务就是设置实例属性。对于这个任务来说变量名总是被认为是冗余的：
+		class Point {
+		    constructor(x, y) {
+		        this.x = x;
+		        this.y = y;
+		    }
+		}
+
+	我比较喜欢下面的语法，它完全删除了冗余的代码(CoffeeScript 和 TypeScript都可以做到，但是我更喜欢下面这种语法)：
+
+		class Point {
+		    constructor(this.x, this.y) {
+		    }
+		}
+
+	Object.assign() 至少也能够让你避免一些冗余：
+
+		class Point {
+		    constructor(x, y) {
+		        Object.assign(this, {x, y});
+		    }
+		}
+
+	在 ECMAScript 6 中， {x, y} 是 {x: x, y: y} 的一种缩写形式。
+
+
+	2.2 给对象添加方法
+	在 ECMAScript 5 中，可以使用函数表达式来给对象添加方法：
+
+		MyClass.prototype.foo = function(arg1, arg2) {
+		    // ...
+		};
+
+	在 ECMAScript 6 中对于方法 [3] 有一个更简洁的语法。这就要感谢 Object.assign() 了，但是你也不必抛弃原来的语法：
+
+		Object.assign(MyClass.prototype, {
+		    foo(arg1, arg2) {
+		        ...
+		    }
+		});
+
+	2.3 克隆对象
+	也可以使用 Object.assign() 来克隆一个对象(浅克隆):
+	var copy = Object.assign({__proto__: obj.__proto__}, obj);
+
+
+	如果只对对象的自由属性感兴趣，那更简单：
+	var copy = Object.assign({}, obj);
+3、常见用途:
+	1）为对象添加属性
+	 	class Point {
+		  constructor(x, y) {
+		    Object.assign(this, {x, y});
+		  }
+		}
+	2）为对象添加方法
+	 	Object.assign(SomeClass.prototype, {
+		  someMethod(arg1, arg2) {
+		    ···
+		  },
+		  anotherMethod() {
+		    ···
+		  }
+		});
+
+		// 等同于下面的写法
+		SomeClass.prototype.someMethod = function (arg1, arg2) {
+		  ···
+		};
+		SomeClass.prototype.anotherMethod = function () {
+		  ···
+		};
+	3）克隆对象
+		将原始对象拷贝到一个空对象，就得到了原始对象的克隆，采用这种方法克隆，只能克隆原始对象自身的值，不能克隆它继承的值。
+			function clone(origin) {
+			  return Object.assign({}, origin);
+			}
+		如果想要保持继承链
+			function clone(origin) {
+			  let originProto = Object.getPrototypeOf(origin);
+			  return Object.assign(Object.create(originProto), origin);
+			}
+	4）合并多个对象
+		将多个对象合并到某个对象。
+			const merge = (target, ...sources) => Object.assign(target, ...sources);
+		
+		如果希望合并后返回一个新对象，可以改写上面函数，对一个空对象合并
+			const merge = (...sources) => Object.assign({}, ...sources);
+	5）为属性指定默认值
+		const DEFAULTS = {
+		  logLevel: 0,
+		  outputFormat: 'html'
+		};
+
+		function processContent(options) {
+		  options = Object.assign({}, DEFAULTS, options);
+		}
+
+-------------------------------------------------------------------------------------
+四、属性的可枚举性
+-------------------------------------------------------------------------------------
+对象的每个属性都有一个描述对象（Descriptor），用来控制该属性的行为。Object.getOwnPropertyDescriptor方法可以获取该属性的描述对象。
+	let obj = { foo: 123 };
+	Object.getOwnPropertyDescriptor(obj, 'foo')
+	//  {
+	//    value: 123,
+	//    writable: true,
+	//    enumerable: true,
+	//    configurable: true
+	//  }
+注意：
+	1、ES5有三个操作会忽略enumerable为false的属性。
+	    for...in循环：只遍历对象自身的和继承的可枚举的属性
+	    Object.keys()：返回对象自身的所有可枚举的属性的键名
+	    JSON.stringify()：只串行化对象自身的可枚举的属性
+
+	2、ES6新增了一个操作Object.assign()，会忽略enumerable为false的属性，
+		Object.assign()只拷贝对象自身的可枚举的属性。
+
+	3、ES6规定，所有Class的原型的方法都是不可枚举的。
+		Object.getOwnPropertyDescriptor(class {foo() {}}.prototype, 'foo').enumerable
+		// false
+
+-------------------------------------------------------------------------------------
+五、属性的遍历
+-------------------------------------------------------------------------------------
+ES6一共有5种方法可以遍历对象的属性。
+	1）for...in
+	  for...in循环遍历对象自身的和继承的可枚举属性（不含Symbol属性）。
+	2）Object.keys(obj)
+	  Object.keys返回一个数组，包括对象自身的（不含继承的）所有可枚举属性（不含Symbol属性）。
+	3）Object.getOwnPropertyNames(obj)
+	  Object.getOwnPropertyNames返回一个数组，包含对象自身的所有属性（不含Symbol属性，但是包括不可枚举属性）。
+	4）Object.getOwnPropertySymbols(obj)
+	  Object.getOwnPropertySymbols返回一个数组，包含对象自身的所有Symbol属性。
+	5）Reflect.ownKeys(obj)
+	  Reflect.ownKeys返回一个数组，包含对象自身的所有属性，不管是属性名是Symbol或字符串，也不管是否可枚举。
+
+	注意：以上的5种方法遍历对象的属性，都遵守同样的属性遍历的次序规则。	
+	    首先遍历所有属性名为数值的属性，按照数字排序。
+	    其次遍历所有属性名为字符串的属性，按照生成时间排序。
+	    最后遍历所有属性名为Symbol值的属性，按照生成时间排序。
+
+-------------------------------------------------------------------------------------
+六、__proto__属性，Object.setPrototypeOf()，Object.getPrototypeOf()
+-------------------------------------------------------------------------------------
+1、__proto__属性（前后各两个下划线），用来读取或设置当前对象的prototype对象。目前，所有浏览器（包括IE11）都部署了这个属性。无论从语义的角度，还是从兼容性的角度，都不要使用这个属性，而是使用下面的Object.setPrototypeOf()（写操作）、Object.getPrototypeOf()（读操作）、Object.create()（生成操作）代替。
+	// es6的写法
+	var obj = {
+	  method: function() { ... }
+	};
+	obj.__proto__ = someOtherObj;
+
+	// es5的写法
+	var obj = Object.create(someOtherObj);
+	obj.method = function() { ... };
+在实现上，__proto__调用的是Object.prototype.__proto__，具体实现如下
+	Object.defineProperty(Object.prototype, '__proto__', {
+	  get() {
+	    let _thisObj = Object(this);
+	    return Object.getPrototypeOf(_thisObj);
+	  },
+	  set(proto) {
+	    if (this === undefined || this === null) {
+	      throw new TypeError();
+	    }
+	    if (!isObject(this)) {
+	      return undefined;
+	    }
+	    if (!isObject(proto)) {
+	      return undefined;
+	    }
+	    let status = Reflect.setPrototypeOf(this, proto);
+	    if (!status) {
+	      throw new TypeError();
+	    }
+	  },
+	});
+	function isObject(value) {
+	  return Object(value) === value;
+	}
+2）Object.setPrototypeOf()
+	Object.setPrototypeOf方法的作用与__proto__相同，用来设置一个对象的prototype对象。它是ES6正式推荐的设置原型对象的方法。
+	// 格式
+	Object.setPrototypeOf(object, prototype)
+	// 用法
+	var o = Object.setPrototypeOf({}, null);
+	// 该方法等同于下面的函数。
+	function (obj, proto) {
+	  obj.__proto__ = proto;
+	  return obj;
+	}
+3）Object.getPrototypeOf()
+	function Rectangle() {
+	}
+
+	var rec = new Rectangle();
+
+	Object.getPrototypeOf(rec) === Rectangle.prototype
+	// true
+
+	Object.setPrototypeOf(rec, Object.prototype);
+	Object.getPrototypeOf(rec) === Rectangle.prototype
+	// false
+	
+
+-------------------------------------------------------------------------------------
+七、Object.keys()，Object.values()，Object.entries() 
+-------------------------------------------------------------------------------------
+1、Object.keys()
+	ES5引入了Object.keys方法，返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（enumerable）属性的键名。
+	var obj = { foo: 'bar', baz: 42 };
+	Object.keys(obj)
+	// ["foo", "baz"]
+2、Object.values() 
+	Object.values方法返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（enumerable）属性的键值。
+	var obj = { foo: 'bar', baz: 42 };
+	Object.values(obj)
+	// ["bar", 42]
+
+	var obj = { 100: 'a', 2: 'b', 7: 'c' };
+	Object.values(obj)
+	// ["b", "c", "a"]
+3、Object.entries 
+	Object.entries方法返回一个数组，成员是参数对象自身的（不含继承的）所有可遍历（enumerable）属性的键值对数组。
+		var obj = { foo: 'bar', baz: 42 };
+		Object.entries(obj)
+		// [ ["foo", "bar"], ["baz", 42] ]
+
+		// Generator函数的版本
+		function* entries(obj) {
+		  for (let key of Object.keys(obj)) {
+		    yield [key, obj[key]];
+		  }
+		}
+
+		// 非Generator函数的版本
+		function entries(obj) {
+		  let arr = [];
+		  for (let key of Object.keys(obj)) {
+		    arr.push([key, obj[key]]);
+		  }
+		  return arr;
+		}
+
+-------------------------------------------------------------------------------------
+八、对象的扩展运算符 
+-------------------------------------------------------------------------------------
+目前，ES7有一个提案，将Rest运算符（解构赋值）/扩展运算符（...）引入对象。Babel转码器已经支持这项功能。
+
+1）解构赋值
+对象的解构赋值用于从一个对象取值，相当于将所有可遍历的、但尚未被读取的属性，分配到指定的对象上面。所有的键和它们的值，都会拷贝到新对象上面。
+	let { x, y, ...z } = { x: 1, y: 2, a: 3, b: 4 };
+	x // 1
+	y // 2
+	z // { a: 3, b: 4 }
+
+	let { x, y, ...z } = null; // 运行时错误
+	let { x, y, ...z } = undefined; // 运行时错误
+
+	let { ...x, y, z } = obj; // 句法错误
+	let { x, ...y, ...z } = obj; // 句法错误
+
+	注意，解构赋值的拷贝是浅拷贝，即如果一个键的值是复合类型的值（数组、对象、函数）、那么解构赋值拷贝的是这个值的引用，而不是这个值的副本。
+
+	let obj = { a: { b: 1 } };
+	let { ...x } = obj;
+	obj.a.b = 2;
+	x.a.b // 2
+
+	解构赋值不会拷贝继承自原型对象的属性。
+	let o1 = { a: 1 };
+	let o2 = { b: 2 };
+	o2.__proto__ = o1;
+	let o3 = { ...o2 };
+	o3 // { b: 2 }
+
+	var o = Object.create({ x: 1, y: 2 });
+	o.z = 3;
+
+	let { x, ...{ y, z } } = o;
+	x // 1
+	y // undefined
+	z // 3
+2）扩展运算符
+扩展运算符（...）用于取出参数对象的所有可遍历属性，拷贝到当前对象之中。
+	let z = { a: 3, b: 4 };
+	let n = { ...z };
+	n // { a: 3, b: 4 }
+
+	// 等同于使用Object.assign方法
+	let aClone = { ...a };
+	// 等同于
+	let aClone = Object.assign({}, a);
+
+	// 扩展运算符可以用于合并两个对象
+	let ab = { ...a, ...b };
+	// 等同于
+	let ab = Object.assign({}, a, b);
+
+	// 如果用户自定义的属性，放在扩展运算符后面，则扩展运算符内部的同名属性会被覆盖掉
+	let aWithOverrides = { ...a, x: 1, y: 2 };
+	// 等同于
+	let aWithOverrides = { ...a, ...{ x: 1, y: 2 } };
+	// 等同于
+	let x = 1, y = 2, aWithOverrides = { ...a, x, y };
+	// 等同于
+	let aWithOverrides = Object.assign({}, a, { x: 1, y: 2 });
+
+-------------------------------------------------------------------------------------
+九、Object.getOwnPropertyDescriptors()
+-------------------------------------------------------------------------------------
+ES5有一个Object.getOwnPropertyDescriptor方法，返回某个对象属性的描述对象（descriptor）。
+	
+	var obj = { p: 'a' };
+	Object.getOwnPropertyDescriptor(obj, 'p')
+	// Object { value: "a",
+	//   writable: true,
+	//   enumerable: true,
+	//   configurable: true
+	// }
+
+ES7有一个提案，提出了Object.getOwnPropertyDescriptors方法，返回指定对象所有自身属性（非继承属性）的描述对象。
+
+	const obj = {
+	  foo: 123,
+	  get bar() { return 'abc' }
+	};
+
+Object.getOwnPropertyDescriptors(obj)
+	// { foo:
+	//    { value: 123,
+	//      writable: true,
+	//      enumerable: true,
+	//      configurable: true },
+	//   bar:
+	//    { get: [Function: bar],
+	//      set: undefined,
+	//      enumerable: true,
+	//      configurable: true } }
+
+// 该方法的实现，主要是为了解决Object.assign()无法正确拷贝get属性和set属性的问题
+	function getOwnPropertyDescriptors(obj) {
+	  const result = {};
+	  for (let key of Reflect.ownKeys(obj)) {
+	    result[key] = Object.getOwnPropertyDescriptor(obj, key);
+	  }
+	  return result;
+	}
+// Object.getOwnPropertyDescriptors方法配合Object.defineProperties方法，就可以实现正确拷贝
+	const source = {
+	  set foo(value) {
+	    console.log(value);
+	  }
+	};
+
+	const target2 = {};
+	Object.defineProperties(target2, Object.getOwnPropertyDescriptors(source));
+	Object.getOwnPropertyDescriptor(target2, 'foo')
+	// { get: undefined,
+	//   set: [Function: foo],
+	//   enumerable: true,
+	//   configurable: true }
+
+	const shallowMerge = (target, source) => Object.defineProperties(
+	  target,
+	  Object.getOwnPropertyDescriptors(source)
+	);
+
+// Object.getOwnPropertyDescriptors方法的另一个用处，是配合Object.create方法，将对象属性克隆到一个新对象。这属于浅拷贝。
+
+	const clone = Object.create(Object.getPrototypeOf(obj),
+	  Object.getOwnPropertyDescriptors(obj));
+
+	// 或者
+	const shallowClone = (obj) => Object.create(
+	  Object.getPrototypeOf(obj),
+	  Object.getOwnPropertyDescriptors(obj)
+	);
+
+// Object.getOwnPropertyDescriptors也可以用来实现Mixin（混入）模式
+	let mix = (object) => ({
+	  with: (...mixins) => mixins.reduce(
+	    (c, mixin) => Object.create(
+	      c, Object.getOwnPropertyDescriptors(mixin)
+	    ), object)
+	});
+
+	// multiple mixins example
+	let a = {a: 'a'};
+	let b = {b: 'b'};
+	let c = {c: 'c'};
+	let d = mix(c).with(a, b);
+
+-------------------------------------------------------------------------------------
+十、Classes 类，继承，指向
+-------------------------------------------------------------------------------------
+ES6 的类是在基于原型的面向对象模式之上的简单语法糖，它有唯一的、便捷的声明形式，这使得类模式更容易使用，并且鼓励了互操作性。class定义的类支持基于原型的继承、super 调用、实例和静态方法以及构造函数。
+	
+	class Animal {
+	    constructor(){
+	        this.type = 'animal'
+	    }
+	    says(say){
+	        console.log(this.type + ' says ' + say)
+	    }
+	}
+
+	let animal = new Animal()
+	animal.says('hello') //animal says hello
+
+	class Cat extends Animal {
+	    constructor(){
+	        super()
+	        this.type = 'cat'
+	    }
+	}
+
+	let cat = new Cat()
+	cat.says('hello') //cat says hello
+定义：
+上面代码首先用class定义了一个“类”，可以看到里面有一个constructor方法，这就是构造方法，而this关键字则代表实例对象。简单地说，constructor内定义的方法和属性是实例对象自己的，而constructor外定义的方法和属性则是所有实例对象可以共享的。
+继承：
+Class之间可以通过extends关键字实现继承，这比ES5的通过修改原型链实现继承，要清晰和方便很多。上面定义了一个Cat类，该类通过extends关键字，继承了Animal类的所有属性和方法。
+指向：
+super关键字，它指代父类的实例（即父类的this对象）。子类必须在constructor方法中调用super方法，否则新建实例时会报错。这是因为子类没有自己的this对象，而是继承父类的this对象，然后对其进行加工。如果不调用super方法，子类就得不到this对象。
+
+ES6的继承机制，实质是先创造父类的实例对象this（所以必须先调用super方法），然后再用子类的构造函数修改this。
+PS如果你写react的话，就会发现以上三个东西在最新版React中出现得很多。创建的每个component都是一个继承React.Component的类。
+-------------------------------------------------------------------------------------
+十一、enhanced object literals 增强的对象字面量
+-------------------------------------------------------------------------------------
+对象字面量被扩展以支持以下特性：在构建的时候设置原型、foo: foo赋值的简写形式、定义方法、进行super 调用以及使用表达式计算属性名称等。这样就使得对象字面量和类的声明的联系更加紧密，使得基于对象的设计更加便利。
+	var obj = {
+    	// __proto__
+	    __proto__: theProtoObj,
+	    // Shorthand for ‘handler: handler’
+	    // ‘handler: handler’ 的简写形式
+	    handler,
+	    // Methods
+	    toString() {
+	      // Super calls
+	      return "d " + super.toString();
+	    },
+	    // Computed (dynamic) property names
+	    // 计算所得的（动态的）属性名称
+	    [ 'prop_' + (() => 42)() ]: 42
+	};
+
+
+
+
+
+
+
+
+
+
+
+

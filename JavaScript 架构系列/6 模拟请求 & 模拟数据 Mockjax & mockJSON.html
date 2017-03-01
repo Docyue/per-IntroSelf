@@ -1,0 +1,166 @@
+模拟请求 & 模拟数据 Mockjax & mockJSON
+目录
+1. 简介
+1.1 战报
+1.2 绿鸟的攻击
+2. 猪偷走了什么？
+3. Twitter 应用
+4. 使用 api.twitter.com
+5. 模拟静态数据
+5.1 使用 Mockjax
+6. 动态模拟半随机数据
+6.1 使用 Mockjax 和 mockJSON
+7. 攻击！
+8. 结论
+15 April 2013
+原文：Angry Birds of JavaScript: Green Bird - Mocking
+私货：nuysoft/Mock
+1. 简介 ⬆
+一群无法无天的猪从无辜的小鸟那里偷走了所有的前端架构，现在小鸟们要把它们夺回来！一队特殊的小鸟英雄将攻击这些卑鄙的猪，直到夺回原本属于它们的前端 JavaScript 架构！小鸟们最终会成功吗？它们会打败那些培根味儿的敌人吗？让我们一起揭示 JavaScript 之愤怒的小鸟系列的另一个扣人心弦的章节！
+1.1 战报 ⬆
+Red Bird - IIFE
+Blue Bird - Events
+Yellow Bird - RequireJS
+Black Bird - Backbone
+White Bird - Linting
+
+1.2 绿鸟的攻击 ⬆
+在这篇文章中，我们将看看绿鸟，它可以穿越所有那些难以到达的地方，并且伪装和监视那些猪贼！渐渐的，小鸟们将一个接一个地夺回属于它们的东西！
+
+2. 猪偷走了什么？ ⬆
+大多数小鸟是纯粹的 Web 前端开发人员，压根儿就不关注后端。然后小鸟们和水牛（Water Buffalo）就形成了一种共生关系。水牛编写应用的后端，小鸟们则开发前端。这种分工导致的问题是，当后端被开发时，小鸟们只能留下来摆弄自己的羽毛，一直到水牛完工。可是一旦后端完工，交付的压力就落在了小鸟们的身上，而水牛则闲坐在水坑边的树荫下无所事事。幸运的是，一段时间后一只绿鸟提出了模拟后端服务的想法，这样在原本需要等待水牛完工的阶段，小鸟们就可以同步进行开发！这只绿鸟还引入了一些便捷库，使得模拟更加容易。
+然而在最近的一次入侵中，猪群偷走了小鸟们的模拟库！现在，一只绿鸟被派去找回被盗的模拟库。它将用压倒一切诡计的力量摧毁族群，夺回属于它们的东西。
+
+3. Twitter 应用 ⬆
+我们来看一个简单的 Twiter 应用，这个应用将返回一个特定用户的消息。为什么是 Twitter？好吧，因为愤怒的小鸟们和 Twitter 的关系非同寻常，尤其是蓝色的小鸟 ;)
+下面的应用通过 JSONP 从 Twitter 抓取数据。我曾经考虑过用 Backbone.js 来编写这个小应用，但是又考虑到这种做法对于介绍模拟概念会是过度设计。你也会注意到我并没有使用模板引擎，恩，我是故意这么做的。另一只愤怒的小鸟会介绍模板概念 ;)
+
+(function( twitter, $, undefined ) {
+ 
+    var channel = twitter.channel = postal.channel(),
+        URL_TEMPLATE = "https://api.twitter.com/1/statuses/user_timeline/" + 
+            "%(userName)s.json?count=%(count)s&include_rts=1",
+        $selection = null;
+        
+    twitter.selector = null;
+ 
+    twitter.init = function( selector ) {
+        twitter.selector = selector;
+        
+        channel.subscribe( "tweets.available", twitter.displayTweets );    
+    };
+    
+    twitter.displayTweets = function( tweets ) {
+        var $list = $( "<ul/ >" ),
+            $location = $selection || $( twitter.selector );
+        
+        // This would be better suited for a templating engine,
+        // but that's for another Angry Bird ;)
+        $.each( tweets || {}, function( index, tweet ) {
+            var html = "<i>" + moment( tweet.created_at ).fromNow() + "</i>: ";
+            html += "<b>" + tweet.user.name + "</b> - ";
+            html += tweet.text;
+            html += tweet.retweeted ? " <i class='icon-repeat'></i>" : "";
+            html += tweet.favorited ? " <i class='icon-star'></i>" : "";
+            
+            $( "<li />", { html: html }).appendTo( $list );         
+        });
+            
+       $location.append( $list.children() );         
+    };
+    
+    twitter.getTweets = function( userName, count ) {
+        var url = _.string.sprintf( URL_TEMPLATE, { 
+                userName: userName, 
+                count: count || 5 
+            });
+ 
+        $.ajax({
+            url: url,
+            dataType: "jsonp",
+            success: function( tweets ) {
+                channel.publish( "tweets.available", tweets );
+            }
+        });                
+    };
+    
+}( window.twitter = window.twitter || {}, jQuery ));
+ 
+twitter.init( ".tweets" );
+ 
+$( document ).on( "click", "button", function( e ) {
+    var $input = $( this ).closest( "form" ).find( "input" );
+    
+    e.preventDefault();                                                 
+    twitter.getTweets( $input.val() || "elijahmanor" );    
+});
+
+上面的代码运行在下面的内嵌 jsFiddle 中。请随意的运行这些代码，然后打开编辑器玩一下。
+
+4. 使用 api.twitter.com ⬆
+从 Twitter 返回的数据看起来就像下面的截图...
+
+5. 模拟静态数据 ⬆
+假使 Twitter 宕机或者不稳定，或者你只是想在没有互联网接入的情况下测试你的应用，会怎么样？这正是适合模拟后端服务大展拳脚的场景。而且庆幸的是我们可以使用一个称为 Mockjax 的 jQuery 库。你要做的所有事情是调用 $.mockjax，提供一个要监听的 url 和一个期望的响应。下面是一个模拟请求 api.twitter.com 的示例，将返回一些静态数据。
+
+$.mockjax({
+    url: "https://api.twitter.com/1/statuses/user_timeline/*",
+    responseTime: 750,
+    responseText: [
+        { id: 0, created_at: "Mon Apr 11 8:00:00 +0000 2012",  text: "Test Tweet 1",
+            favorited: false, retweeted: false, user: { name: "User 1" } },
+        { id: 1, created_at: "Mon Apr 11 9:00:00 +0000 2012",  text: "Test Tweet 2",
+            favorited: true,  retweeted: true,  user: { name: "User 2" } },
+        { id: 2, created_at: "Mon Apr 11 10:00:00 +0000 2012", text: "Test Tweet 3",
+            favorited: false, retweeted: true,  user: { name: "User 3" } },
+        { id: 3, created_at: "Mon Apr 11 11:00:00 +0000 2012", text: "Test Tweet 4",
+            favorited: true,  retweeted: false, user: { name: "User 4" } },
+        { id: 4, created_at: "Mon Apr 11 12:00:00 +0000 2012", text: "Test Tweet 5",
+            favorited: true,  retweeted: true,  user: { name: "User 5" } }
+    ]
+});
+    
+这不仅很酷，还可以帮助前端开发从后端独立出来，而且编写 Ajax 单元测试也非常方便。
+上面的代码运行在下面的内嵌 jsFiddle 中。请随意的运行这些代码，然后打开编辑器玩一下。
+
+5.1 使用 Mockjax ⬆
+Mockjax 返回的数据看起来就像下面的截图...
+
+6. 动态模拟半随机数据 ⬆
+这项技术的缺点之一在于，制造静态数据很是乏味无趣。通常我会先构造一些同样的对象，然后仅仅是把某些值加 1 或加一些其他的东西。这么做不错，但是很讨厌很花时间，而且不能让你了解真正的UI是什么样子。幸运的是还有一个非常棒的、称为 mockJSON的库。你需要提供一个表示真实数据的模板，指定某些字段的期望类型，等等，还有很多... 下面演示的是我如何重写之前的例子，而且会随机生成 5 到 10 个要显示的消息对象。
+
+$.mockjax({
+    url: "https://api.twitter.com/1/statuses/user_timeline/*",
+    responseTime: 750,
+    response: function() {
+        var data = $.mockJSON.generateFromTemplate({
+            "tweets|5-10": [{
+                "id|+1": 0, 
+                "created_at": "Mon Apr 11 @TIME_HH:@TIME_MM:@TIME_SS +0000 2012",
+                "text": "@LOREM_IPSUM",
+                "favorited|0-1": false,
+                "retweeted|0-1": false,
+                "user": { "name": "@MALE_FIRST_NAME @LAST_NAME" }
+            }]
+        });
+        
+        this.responseText = data.tweets;
+    }
+});
+   
+上面的代码运行在下面的内嵌 jsFiddle 中。请随意的运行这些代码，然后打开编辑器玩一下。
+
+6.1 使用 Mockjax 和 mockJSON ⬆
+Mockjax 和 mockJSON 返回的数据看起来就像下面的截图...
+
+
+
+7. 攻击！ ⬆
+下面是一个用 boxbox 构建的简版 Angry Birds，boxbox 是一个用于 box2dweb 的框架，由 Bocoup 的 Greg Smith 编写。
+按下空格键来发射绿鸟，你也可以使用方向键。
+
+
+8. 结论 ⬆
+独立开发前端和后端可能有些困难。然而庆幸的是，现在前端开发人员可以借助一些技术和库，从而独立于后端的进度进行开发和构建原型。模拟静态数据这一技术还可以帮助构建单元测试。
+
+@sunnylost 补充：Dun, dun, daaaaaaaaaa! 应该是在模拟背景音乐，类似于这种 http://missingno.ocremix.org/musicpages/game_on.html

@@ -1,0 +1,104 @@
+移动端重构系列11——弹窗modal
+
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+modal
+
+设计结构如下：
+
+<header class="header"></header>
+<div class="wrap-page">
+    <section class="page"></section>
+    ...
+</div>
+<footer class="footer"></footer>
+<div class="overlay">
+    <section class="modal">
+        <div class="modal-hd"></div>
+        <div class="modal-bd"></div>
+        <div class="modal-ft"></div>
+    </section>
+</div>
+前面的第n篇文章提过这个overlay遮罩层的问题，现在这里说明下为什么这么设计。
+
+一般来说看到的overlay都与modal是兄弟元素，而不是嵌套关系。本来我也是这么设计的，这就是习惯。后来由于modal居中的问题，重新审视了下这个问题：
+
+为什么遮罩层的overlay与弹窗内容是兄弟元素？
+
+说实话真想不出什么理由，非得搞成兄弟元素。后来突然意识到以前的遮罩层如果不采用半透明图片的话，就得使用opacity（ie6-8不支持，通过滤镜模拟），而这个属性会对整个子元素都起作用，而且还没办法通过子元素覆写这个值。这是我能想到的一条最佳理由，如果还有其他理由欢迎交流。
+
+对于高上大的移动端来说，都是rgba时代了，所以opacity回家吃饭先。既然这个对子元素的影响已经不是问题，那么嵌套关系就可以成立，而且嵌套还有一个非常好的理由，水平垂直居中，flex小指一动即可。而兄弟元素的水平垂直居中就得设置modal的top和left的值为50%，然后再设置translate的x和y方向都-50%
+
+所以果断抛弃兄弟元素设计换成嵌套关系。
+
+modal测试
+
+因为overlay采用了flex布局来控制子元素居中，所以不难呢过采用display为none/block来显示隐藏遮罩层overlay，而是通过z-index的层级来控制，而modal部分通过添加删除modal-in这个class来控制显示隐藏
+
+scss代码如下：
+
+.overlay{
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    background-color: rgba(0,0,0,.8);
+    @include flex-center; // flex水平垂直居中
+}
+.overlay.active {
+  z-index: 980;
+}
+
+$modalBarHeight: 40px !default;
+$modalBdPadding: 15px;
+
+.modal{
+    background-color: #fff;
+    border-radius: 5px;
+    margin: 0 10px;
+    overflow: hidden;
+    opacity: 0;
+    @include transform(translate3d(0,0,0) scale(0.815));
+    @extend %all-transition;
+    @include transition-property(transform, opacity);
+
+    &.modal-in{
+        opacity: 1;
+        @include transform(translate3d(0,0,0) scale(1));
+    }
+
+    .modal-hd{
+        text-align: center;
+        line-height: $modalBarHeight;
+        background-color: $primary;
+        color: #fff;
+    }
+    .modal-bd{
+        padding: $modalBdPadding;
+    }
+    .modal-ft{
+        border-top: 1px solid $gray;
+        @extend %display-flex;
+        .btn-modal{
+            @include flex(1);
+            background-color: #fefefe;
+            text-align: center;
+            line-height: $modalBarHeight;
+            color: $primary;
+            &:first-child{
+                border-right: 1px solid $gray;
+            }
+            &:last-child{
+                border-right: none;
+            }
+            &:hover,&:active{
+                background-color: #d9d9d9;
+            }
+        }
+    }
+}
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-modal.html

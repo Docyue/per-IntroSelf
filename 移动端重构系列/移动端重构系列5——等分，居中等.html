@@ -1,0 +1,221 @@
+移动端重构系列5——等分，居中等
+
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+之所以把本篇单独拿出来讲解，是因为这些在移动端使用的频率太高了，然后实现方法也不尽相同，而这里主要说下如何用flex和translate来实现。
+
+
+注：代码部分涉及到sass的mixin部分，在sandal的mixin文件中均有定义，可以直接使用。
+
+等分
+
+在说等分之前，先抛出一个问题，如下面的emmet代码，footer部分的导航有些页面是三个，有些页面是四个，我们要求的是不论是三个还是四个甚至于5个，都平分宽度。
+
+footer.footer>ul.nav-links>li*3
+footer.footer>ul.nav-links>li*4
+float
+
+如果采用float技术的话，那估计只有在ul上添加额外的class来设置li的百分比宽度了。
+
+.nav-links li{
+    float:left;
+    width:25%;
+}
+.percent-half li{
+    width:50%;
+}
+.percent-third li{
+    width:33.333%;
+}
+...
+这个太蛋疼了，高上大的移动端怎么能用这么老套的东西呢，所以不考虑。
+
+table
+
+也许这个技术会被很多人忘记，不过用在移动端确实不错，关键是没有兼容问题的。主要设置父元素的display: table;table-layout: fixed;width: 100%;，然后设置子元素为display: table-cell;即可。
+
+// table 等分
+@mixin table-equal($children: li) {
+    display: table;
+    table-layout: fixed;
+    width: 100%;
+    $childrenEle: li div p a span strong;
+    @if index($childrenEle, $children) {
+        #{$children} {
+            display: table-cell;
+        }
+    }
+    @else {
+        .#{$children} {
+            display: table-cell;
+        }
+    }
+}
+
+.nav-links{
+    @include table-equal;
+}
+这个mixin内部定义了一个$childrenEle元素选择器变量集合，如果传入的参数是其中的一个，那么直接使用元素选择器，否则就当class选择器使用，如默认的li解析后就是li{display: table-cell;}，而如果传入children，则解析后就是.children{display: table-cell;}。下面的flex同样使用了该方法
+
+注：在移动端display: table;同样也是个有利的神器，比起各种float什么的，这个技术还是可以单刀直入，直指问题核心
+
+flex
+
+flex技术是个好技术，不过最关键的还是其兼容问题，算起来它有三个版本，是有点乱哈哈。不过sandal的css3文件已经封装好了，所以只管调用，它会自动生成对应的兼容代码。
+
+// flex 等分
+@mixin flex-equal($children: li) {
+    @extend %display-flex;
+    $childrenEle: li div p a span strong;
+    @if index($childrenEle, $children) {
+        #{$children} {
+            @include flex(1);
+        }
+    }
+    @else {
+        .#{$children} {
+            @include flex(1);
+        }
+    }
+}
+
+.nav-links{
+    @include flex-equal;
+}
+等分，居中等demo测试
+
+水平垂直居中
+
+以简单的弹窗为例：
+
+<div class="overlay">
+    <section class="modal">
+        <div class="modal-bd">
+            <p>青，取之于蓝，而青于蓝；冰，水为之，而寒于水。故木受绳则直，金就砺则利，君子博学而日参省乎己，则知明而行无过矣。</p>
+        </div>
+    </section>      
+</div>
+也许看到这个结构，很多人都会纳闷，因为大家看到更多的应该是：.overlay+section.modal，即蒙版与弹出内容是兄弟元素，而不是嵌套关系。这里先卖个关子，到modal实例的时候，再分析。
+
+flex
+
+样式写在父元素上
+
+// flex center
+// display:flex
+%display-flex,%flex-display {
+    @include display-flex;
+}
+
+@mixin flex-center($direction: both) {
+    @extend %display-flex;
+    @if $direction == both {
+        @include justify-content(center);
+        @include align-items(center);
+    }
+    @else if $direction == x {
+        @include justify-content(center);
+    }
+    @else if $direction == y {
+        @include align-items(center);
+    }
+}
+
+.overlay{
+    z-index: 980;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0,0,0,.8);
+    @include flex-center; // overlay调用
+}
+.modal{
+    background-color: #fff;
+    border-radius: 5px;
+    margin: 0 10px;
+    overflow: hidden;
+
+    .modal-bd{
+        padding: 15px;
+    }
+}
+关于flex的单个元素水平垂直居中，新语法直接父元素为flex，子元素设置margin为auto即可，因为移动端还在使用旧语法，所以暂不使用margin这个方法，而是设置父元素的水平及垂直都居中
+
+translate
+
+样式写在要居中的元素上。原理就是先绝对定位，left/top为50%，然后通过translate偏移-50%回去（translate偏移的百分比为自身宽高的百分比），比从前的margin-top/left设置负值偏移回去高级点，因为设置margin必须得知道自身元素的宽高，然后设置具体的数字，而translate不用管自身的宽高，直接50%就可以搞定
+
+// translate 50%
+@mixin translate-center($direction: both) {
+    position: absolute;
+    @if $direction == both {
+        top: 50%;
+        left: 50%;
+        @include translate(-50%, -50%);
+    }
+    @else if $direction == x {
+        left: 50%;
+        @include translate(-50%, 0);
+    }
+    @else if $direction == y {
+        top: 50%;
+        @include translate(0, -50%);
+    }
+}
+
+.overlay{
+    z-index: 980;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: rgba(0,0,0,.8);
+}
+.modal{
+    @include translate-center;  // modal调用
+    background-color: #fff;
+    border-radius: 5px;
+    width:300px;
+    overflow: hidden;
+
+    .modal-bd{
+        padding: 15px;
+    }
+}
+上面的flex和translate两个mixin都可以实现单独的水平居中或垂直居中，传入相应的x或y即可。不论是flex还是translate水平垂直居中都有两个很好的优势即无需借助额外的空标签，也无需知道子元素的具体宽高，这比从前的一些方法强多了
+
+等分，居中等demo测试
+
+左右两端对齐
+
+对于左右两端对齐，以前使用最多的可能就是float，position了，现在同样可以采用flex来搞定
+
+// justify
+@mixin justify($extend: true) {
+    @if $extend {
+        @extend %justify;
+    }
+    @else {
+        @extend %display-flex;
+        @include justify-content(space-between);
+    }
+}
+%justify {
+    @include justify(false);
+}
+
+.justify{
+    @include justify;
+}
+等分，居中等demo测试
+
+总结
+
+如果你开始做移动端，那么flex和transform这两大属性有必要熟练运用，运用好了能解决很多问题。一般来说flex可以用来实现一些布局，再也不用动不动就float了；而transform中的rotate及translate则可以实现一些旋转及位移移动，旋转可以搞定图标的一些变化，而位移移动则可以实现居中，位移动画等。
+
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-uniform-and-center.html

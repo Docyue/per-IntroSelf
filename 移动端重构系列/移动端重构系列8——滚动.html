@@ -1,0 +1,54 @@
+移动端重构系列8——滚动
+
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+原生滚动
+
+原生滚动的属性为：-webkit-overflow-scrolling:touch;，如果是走高富帅的苹果路线，是没问题的，谁让这是人家亲生的呢；如果是安卓的话，我真不知道是支持还是不支持，说不支持吧好像有点缓动效果，说支持吧好像把这条属性砍掉也一样，感兴趣的可以自己测试下（添加或删除这个属性对比下）
+
+
+原生滚动支持测试：
+
+ overflow-scrolling 测试1
+ overflow-scrolling 测试2
+iscroll模拟
+
+既然原生的安卓上不太靠谱，那就有必要用js来解决了，因为本人不擅长js，所以直接上iscroll，现在iscroll也已经到第五版本了，iscroll的github上有很全的例子，虽然比较简单，不过入门还是不错的。这里我也搞了两个demo，在demo之前，有必要先说明下使用iscroll应该注意的一些事项：
+
+html结构方面
+
+iscroll要求至少两层结构，wrap是一个固定的容器，overflow为hidden，而scroll为滚动的内容，如果开启translate（默认开启），则使用translate来实现偏移滚动，如果没有则使用left/top来实现偏移滚动。如果wrap下面有多个直接子元素，即scroll有其他兄弟元素则只对第一个子元素滚动，其他的自动忽略。（wrap和scroll的class是随便的，主要就是得有两层结构）
+
+<div class="wrap">
+    <div class="scroll">
+        ...
+    </div>
+</div>
+如图：
+
+iscoll img
+
+css样式方面
+
+除了要求wrap有宽高及overflow为hidden，还得对scroll元素设置position为relative或absolute，这样才能设置偏移。
+
+js方面
+
+最简单的就是直接new一个IScroll对象即可，其他配置可直接参考官网的说明：
+
+window.addEventListener('load',function(){ var myScroll = new IScroll('.wrap');});
+document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
+献上两个简单的demo：
+
+ 绝对定位布局中间使用iscroll滚动
+ 水平滚动，按照官方的实例，水平滚动的时候，整个页面的垂直滚动直接交给浏览器默认处理。
+由于本人的js水平实在有限，关于这个我也分析不出来什么来龙去脉，摘录几篇文章以供想学习的参考下吧。下面的资料都是iscroll 4的。（虽然官网已经介绍的足够好了，但iscroll的坑还是很多的，多看看总不赖）
+
+参考资料：
+
+ iScroll 4.2.5 中文API
+ web app开发利器 - iscroll4 解决方案
+ iscroll4 精讲
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-scroll.html

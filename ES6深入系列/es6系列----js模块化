@@ -1,0 +1,68 @@
+####es6系列----js模块化
+// Modules 模块
+// Module Loaders 模块加载器
+
+-------------------------------------------------------------------------------------
+Modules 模块
+-------------------------------------------------------------------------------------
+ES6 在语言层面上支持使用模块来进行组件定义，将流行的JavaScript模块加载器（AMD、CommonJS）中的模式固化到了语言中。运行时行为由宿主定义的默认加载器定义，隐式异步模型 - 直到（全部）请求的模块均可用且经处理后，才会执行（当前模块内的）代码。
+
+	// lib/math.js
+	export function sum(x, y) {
+	  return x + y;
+	}
+	export var pi = 3.141593;
+
+	// app.js
+	import * as math from "lib/math";
+	alert("2π = " + math.sum(math.pi, math.pi));
+
+	// otherApp.js
+	import {sum, pi} from "lib/math";
+	alert("2π = " + sum(pi, pi));
+
+额外的新特性，包括export default以及export *：
+
+	// lib/mathplusplus.js
+	export * from "lib/math";
+	export var e = 2.71828182846;
+	export default function(x) {
+		return Math.exp(x);
+	}
+
+	// app.js
+	import exp, {pi, e} from "lib/mathplusplus";
+	alert("2π = " + exp(pi, e));
+
+-------------------------------------------------------------------------------------
+Module Loaders 模块加载器
+-------------------------------------------------------------------------------------
+模块加载器支持:
+
+    动态加载
+    状态隔离
+    全局命名空间隔离
+    编译钩子
+    嵌套虚拟化(注: 在模块内调用模块)
+默认的模块加载器是可配置的，也可以构建新的加载器，对在隔离和受限上下文中的代码进行求值和加载。
+
+	// 动态加载 - ‘System’ 是默认的加载器
+	System.import('lib/math').then(function(m) {
+	  alert("2π = " + m.sum(m.pi, m.pi));
+	});
+
+	// 创建一个执行沙箱- 新的加载器
+	var loader = new Loader({
+	  global: fixup(window) // replace ‘console.log’
+	});
+	loader.eval("console.log('hello world!');");
+
+	// 直接操作模块缓存
+	System.get('jquery');
+	System.set('jquery', Module({$: $})); // WARNING: not yet finalized 警告：此部分的设计尚未最终定稿
+
+
+
+
+
+

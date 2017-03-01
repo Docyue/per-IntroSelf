@@ -1,0 +1,222 @@
+移动端重构系列3——整体布局
+
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+，测试demo
+
+移动端和pc端一样整体上布局也可以分为上中下三部分，如图：
+
+
+layout template
+
+一般来说,header和footer部分都为fixed定位，中间的内容区域可滚动。
+
+fixed布局
+
+常规的结构如下：
+
+<header class="header fixed-top"></header>
+<div class="wrap-page">
+    <section class="page"></section>
+    <section class="page"></section>
+    ...
+</div>
+<footer class="footer fixed-bottom"></footer>
+因为移动端单页面特性，所以每个page为一个页面，然后整体使用wrap-page包裹。考虑到可滚动的为page内容，所以我们得给wrap-page一个具体的高度，然后使用原生的-webkit-overflow-scrolling:touch;来实现滚动，当然对于不支持的，也可以使用iscroll来兼容，而iscroll同样也需要一个固定高度的容器来包裹可滚动的内容。
+
+* {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+html, body, .wrap-page {
+  height: 100%;
+}
+.wrap-page {
+  -webkit-overflow-scrolling: touch;
+}
+.fixed-top {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 960;
+}
+
+.fixed-bottom {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 940;
+}
+虽然header和footer部分采用了fixed定位，脱离了文档流，但还是会挡住下面的内容，所以有必要对wrap-page设置上下的padding间隔，以防止header和footer遮挡page内容（假设header和footer高度各为44px）：
+
+.wrap-page {
+  padding-top: 44px;
+  padding-bottom: 44px;
+}
+看起来不错，不过如果碰到有些页面有header和footer，而有些页面只有header，而有些甚至有两个header部分，这么一刀切的方法显然不合适。按照这个结构只好通过js来给wrap-page添加不同的class来设置上下的padding。下面我们说下另一种用css就能解决的方法。
+
+优化结构
+
+这次我们把footer提到wrap-page上面，然后采用兄弟选择器，就可以解决刚才那个padding问题，ratchet就是采用该方法（经反馈，一些国产的安卓机对兄弟元素选择器支持不太好，所以这个方案适合高上大的玩，更新时间：2014-07-03）
+
+<header class="header fixed-top"></header>
+<footer class="footer fixed-bottom"></footer>
+<div class="wrap-page">
+    <section class="page"></section>
+    <section class="page"></section>
+    ...
+</div>
+这样我们就可以采用兄弟选择器，设置上下的padding：
+
+.header ~ .wrap-page {
+  padding-top: 44px;
+}
+.footer ~ .wrap-page {
+  padding-bottom: 44px;
+}
+同样如果有二层header部分（如搜索框）：
+
+<header class="header fixed-top"></header>
+<section class="header-sub"></section>
+<footer class="footer fixed-bottom"></footer>
+<div class="wrap-page">
+    <section class="page"></section>
+    <section class="page"></section>
+    ...
+</div>
+还是采用兄弟选择器，将wrap-page的padding-top设置为header的高度加上header-sub的高度：
+
+.header-sub ~ .wrap-page {
+  padding-top: 88px;
+}
+看起来不错，再也不用通过js来判断对wrap-page增删class了。
+
+不过这个也同样有个问题，为了说明这个问题，我们还是回到移动端单页面特性这个上面，我们的页面是通过page的形式添加到wrap-page这个包裹上的，每次只显示一个而已。
+
+<div class="wrap-page">
+    <section class="page"></section>
+    <section class="page" style="display:none;"></section>
+    <section class="page" style="display:none;"></section>
+    ...
+</div>
+当然每个页面不可能只有content部分，也会有header和footer，不同页面存在不同的header或footer这是绝对可能的。那么如果header和footer部分也通过这种显示隐藏的方式来搞呢？
+
+如：我们从一个有header和footer的页面，切换到一个只有header的页面，且header改变，就会成为下面这样：
+
+<header class="header fixed-top" style="display:none;"></header>
+<header class="header fixed-top"></header>
+<footer class="footer fixed-bottom" style="display:none;"></footer>
+这样虽然footer隐藏了，但是对于下面这条样式同样还是会解析生效，wrap-page会有44px的padding-bottom
+
+.footer ~ .wrap-page {
+  padding-bottom: 44px;
+}
+所以如果我们采用这种布局，header和footer绝对不能采用显示显示隐藏的方式来搞，而应该采用替换形式，没有则删除。具体可以参考ratchet的实现方式
+
+绝对定位布局
+
+直接参考demo，关键在于设置wrap-page的top，bottom的距离为header和footer的高度。
+
+css代码如下：
+
+.header,.footer,.wrap-page{
+  position:absolute;
+  left:0;
+  right:0;
+}
+.header,.footer{
+  height:44px;
+  background-color: #fff;
+  text-align: center;
+  z-index:900;
+  line-height:44px;
+}
+.header{
+  top: 0;
+  border-bottom: 1px solid #f00;
+}
+.footer{
+  bottom: 0;
+  border-top: 1px solid #f00;
+}
+.wrap-page{
+  top: 44px;
+  bottom: 44px;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.page{
+  padding: 10px;
+}
+.page p{
+  margin-bottom: 10px;
+}
+这个布局的缺陷在于滚动的时候地址栏不隐藏，safari浏览器可以通过下面js代码来隐藏地址栏，其他浏览器经测试不可以
+
+window.addEventListener('load', function(){
+   setTimeout(function(){ window.scrollTo(0, 1); }, 100);
+});
+如果你实在要除掉浏览器的地址栏和工具栏，可以设置meta标签为应用模式，参考新建空白页面的其他meta部分
+
+<!-- UC应用模式 -->
+<meta name="browsermode" content="application">
+<!-- QQ应用模式 -->
+<meta name="x5-page-mode" content="app">
+flex布局
+
+可以通过这个简单的demo来测试：flex layout demo
+
+设置body为flex布局，方向为垂直方向，wrap-page的flex为1。这个跟上面的绝对定位一样，还是滚动的时候地址栏不隐藏，safari同样可以通过js来搞定，其他浏览器不可以
+
+body {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -ms-flex-direction: column;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+}
+
+.wrap-page {
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  -webkit-flex: 1;
+  flex: 1;
+}
+
+.header,.footer{
+  height:44px;
+  background-color: #fff;
+  text-align: center;
+  line-height:44px;
+  position:relative;
+  z-index:990;
+}
+.header{
+  border-bottom: 1px solid #f00;
+}
+.footer{
+  border-top: 1px solid #f00;
+}
+.wrap-page{
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.page{
+  padding: 10px;
+}
+.page p{
+  margin-bottom: 10px;
+}
+总结
+
+因为fixed定位，滚动的时候bug太多，特别是有表单元素的时候得慎用；而flex布局兼容方面有一定问题，好像性能也不是很好，况且如果是在body下面直接布局的话，只有上中下这几个元素还好，如果再添加上弹窗，panel什么的子元素搞不好还有问题得深入；所以选择绝对定位相对来说还是比较靠谱的。而优化的元素位置关系，因为国产的安卓手机太多，有些还不太支持，再加上隐藏的元素选择器还有效，所以暂时不考虑。
+
+最后我们一般采用常规结构的绝对定位来布局。
+
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-mobile-layout.html

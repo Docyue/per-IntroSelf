@@ -1,0 +1,108 @@
+ 本篇文章主要讨论下目前JS,CSS 合并、压缩、缓存管理存在的一些问题，然后分享下自己项目中用到的1个处理方案，并提供1个实例下载。
+
+存在的问题：
+
+     合并、压缩文件主要有2方面的问题：
+       1. 每次发布的时候需要运行一下自己写的bat文件或者其他程序把文件按照自己的配置合并和压缩。
+
+       2. 因生产环境和开发环境需要加载的文件不一样，生产环境为了需要加载合并、压缩后的文件，而开发环境为了修改、调试方便，需要加载非合并、压缩的文件，所以我们常常需要在JSP中类似与下面的判断代码：
+        <c:if test="${env=='prod'}">
+           <script type="text/javascript" src="/js/all.js"></script>
+        </c:if>
+        <c:if test="${env=='dev'}">
+           <script type="text/javascript" src="/js/1.js"></script>
+           <script type="text/javascript" src="/js/2.js"></script>
+           <script type="text/javascript" src="/js/3.js"></script>
+        </c:if>
+
+--------------------------------------------------------------------------------------------------------
+缓存问题：在现在JS满天飞的时代，大家都知道缓存能带来的巨大好处，但缓存确实非常麻烦的一个问题，相信很多人曾经历过下面的情况：为了让程序更快，在服务器上为JS加上缓冲5天的代码，但产品更新后第二天就接到电话说系统出错，详细了解后就发现是缓存引起的，让用户删除缓存后就会OK。原因很简单，就是你JS已经修改了，但用户还在使用缓存中的老JS。在经历几次这种情况，被领导数落了几次后。没办法只能把JS的缓冲去掉，或者改成8个小时。可这样就完全失去了缓存的优势了，哪我们到底需要解决哪些问题才能让我们使用缓冲顺心如意了？
+
+    1. 如何在修改了某个JS后，自动把所有引用该JS页面的代码中加上1个版本号？
+    2. 该如何生成版本号，根据什么来产生这个版本号。
+
+    可能有人为了解决上面的缓存问题，写了个JSP标签，通过标签读取JS、css文件的修改时间来作为版本号，从而来解决上面2个问题。但这种方法有下面几个缺点：
+    1. 每次请求都要通过标签读取读取文件的修改时间，速度慢。当然你可以把文件的修改时间放到缓存中，这样也会加到了内存使用量。
+    2. 在HTML静态页面中用不了
+    3. 如果你们公司是如下的部署发布方式(我们公司就是这样)，则会失效。每次发布，不是直接覆盖之前的WEB目录，运维的为的发布方便，要求每次发布直接给他们1个war包，他们会把之前WEB目录整个删除，然后上传现在的war包，这样就导致程序运行后，所有文件的最后修改时间都是解压war的时间。
+
+--------------------------------------------------------------------------------------------------------
+分享自己项目中的处理方案：
+
+为了解决上面讨论过的问题，在下写了1个如下的组件，组件中根据我们自己的实际情况使用了文件大小来做为文件的版本号，虽然在文件修改很小(比如把字符a改成b)，可能文件大小并没有变，导致版本号也不会变。
+
+但这种机率还是非常低的。当然如果你觉的使用文件修改时间作为版本号适合你，只需要修改一行代码就行，下面看下这个组件的处理流程(本来想用流程图表达，最后还是觉的文字来的直白写)：
+
+    1. 程序启动(contextInitialized)
+    2. 搜索程序目录下的所有merge.txt文件，根据merge.txt文件的配置合并文件, merge.txt文件实例如下：
+    # 文件合并配置文件,多个文件以|隔开，以/开头的表示从根目录开始,
+    # 空格之后的文件名表示合并之后的文件名
+    # 把1,2,3合并到all文件中
+1   .js|2.js|3.js all.js
+    #合并CSS
+    /css/mian.css|/css/common.css all.css
+    3. 搜索程序目录下所有JS，CSS文件(包括合并后的)，每个文件都压缩后生成对应的1个新文件。
+    4. 搜索程序目录下所有JSP,html文件，把所有JS,css的引用代码改成压缩后并加了版本号的引用。
+
+--------------------------------------------------------------------------------------------------------
+实例：
+    实例的文件结构如下图：
+
+    看JSP原始代码(程序运行前)：
+    <%@page contentType="text/html" pageEncoding="UTF-8"%>
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  "http://www.w3.org/TR/html4/loose.dtd">
+    <% boolean isDev = false;  // 是否开发环境%>
+    <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>JSP Page</title>
+            <% if(isDev){ %>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/jquery-1.4.2.js"></script>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/1.js"></script>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/2.js"></script>
+            <link type="text/css" rel="stylesheet" href="<%=request.getContextPath() %>/css/1.css" />
+            <link type="text/css" rel="stylesheet" href="<%=request.getContextPath() %>/css/2.css" />
+            <% }else{ %>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/jquery-1.4.2.js"></script>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/all.js"></script>
+            <link type="text/css" rel="stylesheet"  href="<%=request.getContextPath() %>/css/all.css" />
+            <% } %>
+        </head>
+        <body>
+            <h1 class="c1">Hello World!</h1>
+        </body>
+    </html>
+
+
+    程序运行后JSP的代码：
+    <%@page contentType="text/html" pageEncoding="UTF-8"%>
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+    <%
+        boolean isDev = false;  // 是否开发环境
+    %>
+    <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+            <title>JSP Page</title>
+            <% if(isDev){ %>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/jquery-1.4.2-3gmin.js?99375"></script>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/1-3gmin.js?90"></script>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/2-3gmin.js?91"></script>
+            <link type="text/css" rel="stylesheet" href="<%=request.getContextPath() %>/css/1-3gmin.css?35" />
+            <link type="text/css" rel="stylesheet" href="<%=request.getContextPath() %>/css/2-3gmin.css?18" />
+            <% }else{ %>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/jquery-1.4.2-3gmin.js?99375"></script>
+            <script type="text/javascript" src="<%=request.getContextPath() %>/js/all-3gmin.js?180"></script>
+            <link type="text/css" rel="stylesheet"  href="<%=request.getContextPath() %>/css/all-3gmin.css?53" />
+            <% } %>
+        </head>
+        <body>
+            <h1 class="c1">Hello World!</h1>
+        </body>
+    </html>
+
+    加3gmin后缀的文件全部是程序启动时自动生成的。
+
+PS：自己的设计的处理方案并没有解决"需要JSP中加判断代码的问题"，主要是因为还没有找到什么好的办法去自动删除1.js,2.js,3.js的3个引用，而插入1个新的all.js的引用，如果那位同学对解决这个问题有好的想法，请不吝赐教。
+      如果有同学想使用这个组件，建议在测试环境下运行一次后，把修改后的程序直接上传到正式服务器上，然后去掉这个功能，不然在服务器上每次启动都调用这个功能还是需要花费一些时间和资源的
+       其实一直想使用SVN中的版本号来控制缓存，这个是最严谨的一个方法，但也因为做起来太复杂，所以一直也没做起来，以后以后有时间可以再研究。

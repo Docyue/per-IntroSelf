@@ -1,0 +1,242 @@
+模板 - 分离展现和逻辑 Templating
+目录
+1. 简介
+1.1 战报
+1.2 橙色小鸟的攻击
+2. 猪偷走了什么？
+3. 为什么要使用模板引擎？
+4. Underscore.js
+4.1 示例1
+4.2 示例2
+4.3 为什么使用 Underscore.js？
+5. Handlebars.js
+5.1 预编译模板
+5.2 为什么使用 Handlebars.js？
+6. 其他模板引擎怎么样？
+7. 其他资源
+8. 攻击！
+9. 结论
+21 April 2013
+原文：Angry Birds of JavaScript: Orange Bird - Templating
+1. 简介 ⬆
+一群无法无天的猪从无辜的小鸟那里偷走了所有的前端架构，现在小鸟们要把它们夺回来！一队特殊的小鸟英雄将攻击这些卑鄙的猪，直到夺回原本属于它们的前端 JavaScript 架构！小鸟们最终会成功吗？它们会打败那些培根味儿的敌人吗？让我们一起揭示 JavaScript 之愤怒的小鸟系列的另一个扣人心弦的章节！
+
+1.1 战报 ⬆
+Red Bird - IIFE
+Blue Bird - Events
+Yellow Bird - RequireJS
+Black Bird - Backbone
+White Bird - Linting
+Green Bird - Mocking
+
+1.2 橙色小鸟的攻击 ⬆
+在这篇文章中，我们将看看橙色小鸟。他开始时是一个简单的小模板，但随之扩大为一场 DOM爆炸，这么做明确的传达了一个消息，那就是小鸟们是认真的。渐渐的，小鸟们将一个接一个地夺回属于它们的东西。
+
+2. 猪偷走了什么？ ⬆
+在过去的几年里，我们已经看到一个趋势：越来越多的 Web 开发工作在前端完成。我们通过 Ajax 或 Web Sockets 与后端通信，然后在以某种方式在 UI 中显示数据。小鸟们发现它们主要使用字符串拼接来构建富用户界面，从而导致大量让人讨厌的代码，并且容易出现错误。庆幸的是，一只橙色小鸟站了出来，它说，“有没有比这更好的方式？我们不能通过某种方式把展示从数据中分离出来吗？”，就这样，模板进入了小鸟的世界。橙色小鸟通过借用人类的模板库，例如 Underscore.js 和 Handlebar.js 来满足这种需求。
+
+然而，在最近的一次入侵中，猪群偷走了小鸟们的模板库！现在，一只橙色小鸟被派去夺回失窃的模板库。它将用爆炸性的力量摧毁猪群，夺回属于它们的东西。
+
+3. 为什么要使用模板引擎？ ⬆
+在开始模板引擎之前，我建议先看看为什么需要模板引擎。我开发的越多，就越想试图找到将应用的各个部分分开的方式。当太多的东西在同一个地方运行，我开始觉得恶心。看看下面这段代码，然后告诉我你的感受...
+
+(function( twitter, $, undefined ) { 
+    var _selection;
+        
+    twitter.init = function( $selection ) {
+        _selection = $selection;
+    };
+    
+    twitter.displayTweets = function( tweets ) {
+        var $list = $( "<ul/ >" );
+        
+        $.each( tweets || {}, function( index, tweet ) {
+            var html = "<i>" + moment( tweet.created_at ).fromNow() + "</i>: ";
+            html += "<b>" + tweet.user.name + "</b> - ";
+            html += "<span>" + tweet.text + "</span>";
+            html += tweet.retweeted ? " <i class='icon-repeat'></i>" : "";
+            html += tweet.favorited ? " <i class='icon-star'></i>" : "";
+            
+            $( "<li />", { html: html }).appendTo( $list );         
+        });
+            
+       _selection.empty().append( $list.children() );         
+    };
+}( window.twitter = window.twitter || {}, jQuery ));
+
+是的，我不喜欢所有的字符串拼接。如果可能的话，我不希望在我的代码里出现一堆展现。唯一好的一面是它可以工作。你可以在下面的内嵌 jsFiddle 中看到这段代码的输出。
+那么，我们能做些什么呢？某些类型的模板引擎对此能有所帮助，它们可以帮助我们简化代码，并从代码中分离标记。
+
+4. Underscore.js ⬆
+我们首先看看 Underscore.js 中的模板方法。目前我倾向于我的所有项目中使用 Underscore，所以我已经掌握了它的模板引擎。如果我正在做的事情很简单，那么通常我会默认使用 Underscore 的模板引擎。然而，你会看到它有一些局限性，使得我们看的下一个库更吸引人。
+
+4.1 示例1 ⬆
+下面是将上面的代码用 Underscore 的模板重写后的代码。你会注意到代码块已经大大简化。Whoo hooo！
+
+twitter.displayTweets = function( tweets ) {
+    var templateString = $( "#tweets-underscore" ).html(),
+        template = _.template( templateString );
+    
+   _selection.empty().append( template( { tweets: tweets } ) );                   
+};
+
+大部分工作由模板完成，模板则爆裂成一堆标记！正如你在左侧看到的，我们的橙色小鸟现在看起来完全不同了 ;)
+
+我们将布局移动到标记中的一个 script 标签中，并赋予它一个唯一标识。模板中的特殊标记 <%= expression > 表示传入数据的展现位置。你也可以用 <% statements > 语法放置任意 JavaScript（例如循环、分支等）！
+
+<script id="tweets-underscore" type="text/template">
+    <ul>
+        <% _.each( tweets, function( tweet ) { %>
+        <li>
+            <i><%= moment( tweet.created_at ).fromNow() %></i>:
+            <b><%= tweet.user.name %></b> - 
+            <span><%= tweet.text %></span> 
+            <% if ( tweet.retweeted ) { %><i class="icon-repeat"></i><% } %> 
+            <% if ( tweet.favorited ) { %><i class="icon-star"></i><% } %>
+        </li>
+        <% }); %>
+    </ul>
+</script>
+
+你可以在 jsFiddle 中试验上面的代码片段。
+正如 Uncle Ben 所说，“能力越大，责任就越大。”
+
+允许在模板中放置任意代码终究不是最好的注意。在模板中放置数据操作逻辑会导致单元测试非常难以进行。试想一下，如果我们开始用越来越多的代码块把模板搞的凌乱不堪，情况会怎么样。如果你选择了这条路，那么你并没有真正解决最初的手头问题，即展示和逻辑混在一些。
+
+4.2 示例2 ⬆
+下面是使用 Underscore 的另一个示例，但是这次是先做数据操作。在下面代码中，我用 _.map() 方法把每个 date 属性转换为合适的版本。在把数据传给模板之前遍历数据会导致一些性能开销。
+
+twitter.displayTweets = function( tweets ) {
+    var templateString = $( "#tweets-underscore" ).html(),
+        template = _.template( templateString );
+ 
+    tweets = _.map( tweets, function( tweet ) {
+        tweet.created_at = moment( tweet.created_at ).fromNow();
+        return tweet;
+    });
+ 
+    _selection.empty().append( template( { tweets: tweets } ) );                   
+};
+
+我们可以移除下面模板中的数据逻辑，因为在调用模板之前，我们已经的在上面的 JavaScript 中完成了这项工作。结果比最初的版本要好，但还可以更好。
+
+<script id="tweets-underscore" type="text/template">
+    <ul>
+        <% _.each( tweets, function( tweet ) { %>
+        <li>
+            <i><%= tweet.created_at %></i>: 
+            <b><%= tweet.user.name %></b> - 
+            <span><%= tweet.text %></span> 
+            <% if ( tweet.retweeted ) { %><i class="icon-repeat"></i><% } %> 
+            <% if ( tweet.favorited ) { %><i class="icon-star"></i><% } %>
+        </li>
+        <% }); %>
+    </ul>
+</script>
+
+你可以在 jsFiddle 中试验上面的代码片段。
+
+4.3 为什么使用 Underscore.js？ ⬆
+
+你可以在模板中使用任意 JavaScript
+非常小
+如果你已经在使用 Backbone.js，那么可以直接使用它。
+如果你已经在使用 Underscore.js，那么可以直接使用它。
+你可以预编译
+可以同时运行在客户端和服务端
+你能想到其他的吗？
+
+你可以在模板中使用任意 JavaScript
+模板中没有 `this` 的概念
+你能想到其他的吗？
+
+5. Handlebars.js ⬆
+总体而言，我倾向于选择 Handlebar.js 而不是 Underscore 的模板引擎。Handlebars 鼓励你分离展现和逻辑，并且速度更快，并且提供了一种预编译模板的机制，我们将对此做稍微深入的研究。
+
+首先，让我们换个角度看看这篇文章想解决的问题。下面的代码用 Handlebars 来模版化解决方案。这段和之前的版本一样干净。你会注意到，我自定义了一个称为 fromNow 的 helper，可以用在模板中。
+
+twitter.init = function( $selection ) {
+    _selection = $selection;
+    
+    Handlebars.registerHelper( "fromNow", function( time ) {
+        return moment( time ).fromNow();
+    });
+};
+ 
+twitter.displayTweets = function( tweets ) {
+    var templateString = $( "#tweets-handlebars" ).html(),
+        template = Handlebars.compile( templateString );
+                        
+    _selection.empty().append( template( tweets ) );         
+};
+
+现在看看下面的模板化语法。这种语法与 Underscore 相比更加简洁，这正是我喜欢的。在模板内部，我们使用模板 helper fromNow 转换时间。这么做非常好，因为这样我们就不需要事先遍历数组了，就像我们在使用 Underscore 或把逻辑放入模板时做的。
+
+<script id="tweets-handlebars" type="text/x-handlebars-template">
+    <ul>
+        {{#each this}}
+        <li>
+            <i>{{fromNow this.created_at}}</i>: 
+            <b>{{this.user.name}}</b> - 
+            <span>{{this.text}}</span> 
+            {{#if this.retweeted}}<i class="icon-repeat"></i>{{/if}} 
+            {{#if this.favorited}}<i class="icon-star"></i>{{/if}}
+        </li>
+        {{/each}}
+    </ul>
+</script>
+
+你可以在 jsFiddle 中试验上面的代码。
+
+5.1 预编译模板 ⬆
+我在前面简要的提到过，我喜欢 Handlebars 的原因之一是，它可以预编译模板。这是什么意思！？！ Underscore 和 Handlebars 都需要你使用模板之前先编译模板（使用 Underscore 时你可以用一个步骤完成，但是在内部仍然需要先编译）。如果你打算多次重用模板，或者你只是希望模板在需要之前已经就绪，那么编译模板是很好的做法。
+
+然而，对 Handlebars 的使用可以走得更远，你可以在服务端编译模板，然后在前端应用它。这意味着可以减少大量的前端工作量，并且你可以使用 Handlebars 的运行时精简版本，其中只包含了执行模板（不是编译模板）所必需的部分。
+
+How cool is that? If your answer was "It's just about as cool as Batman riding on a Rainbow Unicorn alongside dolphins!", then you were right! Congratulations ;) 这太酷了，不是吗？如果你的答案是“这就像蝙蝠侠骑着彩虹独角兽和海豚在一起一样！”，那么你是对的，恭喜 ;)
+
+So how does that work exactly? Well, first you install Handlebars on your server using Node... 那么，它到底是如何工作的？好吧，首先你在服务器上用 Node 安装 Handlebars...
+
+npm install -g handlebars
+
+然后提取模板内容（script 标签之间）并保存到一个文件中。在这里我们把它保存为 tweets.tmpl。现在运行 handlebars 预编译模板文件。
+
+handlebars tweets.tmpl -f tweets.tmpl.js
+
+所有动作完成后，你得到了模板的一个预编译版本，现在你可以在前端应用中应用它，就像下面这样...
+
+<script src="tweets.tmpl.js"></script>
+
+Now that your template is available on the page you can access it by asking Handlebars for the precompiled version and you are all set to start using it! 现在，你的模板在页面上可访问的，你可以通过请求 Handlebars 得到预编译版本，现在你完全可以开始使用它了。
+
+var template = Handlebars.templates[ "tweets.tmpl" ],
+    markup = template( tweets );
+
+
+5.2 为什么使用 Handlebars.js？ ⬆
+它是一个弱逻辑模板引擎
+你可以在服务端预编译模板
+支持 Helper 方法
+可以运行在客户端和服务端
+在模板中支持 `this` 的概念
+它是 Mustache.js 的超集
+你能想到其他的吗？
+
+6. 其他模板引擎怎么样？ ⬆
+这个是一个好问题。也许你的需求和我的不同，或者你只是不喜欢某个我提到的模板引擎。如果是这样的话，那么你应该看看 Garann Means (@garannm) 创建的模板选择器，这是一个伟大的工具。选择器将询问你一组问题，来辅助判断哪个模板引擎适合你的需求。选择器看起就像下面的例子...
+
+7. 其他资源 ⬆
+An Introduction to Handlebars by Gabriel Manricks (@GabrielManricks)
+Best Practices When Working With JavaScript Templates by Andrew Burgess (@andrew8088)
+Demo of Handlebars, and Why You Should Consider a Templating Engine Raymond Camden (@cfjedimaster)
+HTML's New Template Tag: Standardizing Client-Side Templating by Eric Bidelman (@ebidel)
+
+8. 攻击！ ⬆
+下面是一个用 boxbox 构建的简版 Angry Birds，boxbox 是一个用于 box2dweb 的框架，由 Bocoup 的 Greg Smith 编写。
+按下空格键来发射橙色小鸟，你也可以使用方向键。
+
+
+9. 结论 ⬆
+在代码中混入标记会导致一些让人讨厌的代码，这样的代码繁琐、单调，并且难以维护。能够分离各个部分的能力，给开发人员简化代码并保证各部分各司其职带来了极大的好处。值得庆幸的是，像 Underscore 和 Handlebars 这样的库提供了一种清晰的方式，将展现描述从逻辑中分离出来。你可以自由选择使用什么库，但是我鼓励你多进行一些比较，找到最适合你的库。因此这个问题的答案可能是不仅仅使用一个库，这才是一个不错的选择。
+
+@sunnylost 补充：Dun, dun, daaaaaaaaaa! 应该是在模拟背景音乐，类似于这种 http://missingno.ocremix.org/musicpages/game_on.html

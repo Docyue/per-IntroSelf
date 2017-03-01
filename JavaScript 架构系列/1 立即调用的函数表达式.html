@@ -1,0 +1,164 @@
+立即调用的函数表达式 Immediately-invoked Function Expression
+目录
+1. 简介
+2. 猪偷走了什么？
+3. 对象是如何变为全局对象的？
+4. 为什么全局对象是一个问题？
+5. 保护自己的多种方式
+6. 进攻！
+7. 结论
+15 April 2013
+原文：Angry Birds of JavaScript: Red Bird - IIFE
+1. 简介 ⬆
+
+一群无法无天的猪从无辜的小鸟那里偷走了所有的前端架构，现在小鸟们要把它们夺回来！一队特殊的小鸟英雄将攻击这些卑鄙的猪，直到夺回原本属于它们的前端 JavaScript 架构！
+在这篇文章中，我们将看看红色小鸟，它使用可靠的 IIFE 作为攻击武器，而 IIFE 是一切秘密的基础。
+
+
+
+2. 猪偷走了什么？ ⬆ 
+
+很长时间以来，小鸟们习惯了向全局命名空间（window 对象）乱丢它们的自定义对象和函数。随着时间的慢慢推移，小鸟们逐渐学会了利用全局命名空间来保护它们的对象的技术，然而由于近期猪群的入侵，反全局的秘密都被偷走了！侥幸的是这项秘密技术仍然存在缺陷，小鸟们计划攻击猪群，解放原本属于它们的技术。
+
+3. 对象是如何变为全局对象的？ ⬆
+一个对象变为全局对象有好几种方式。了解各种方式正是战争的一部分。
+
+1. 在 Window 作用域中声明对象
+
+在下面的例子有两个变量声明，type 和 attack。变量在顶级作用域中声明，因此 window 对象可以访问它们。
+
+var type = "Red",
+    attack = function() {
+        console.log( type + " Bird Attacks!" );
+    }; 
+console.log( window.type );   // I'm a global variable
+console.log( window.attack ); // I'm a global function
+
+2. 任何作用域中未声明的对象
+
+在 JavaScript 中，意外的声明一个全局变量是最危险也是最容易发生的事情是，而这并不是你的初衷。如果你忘记声明一个变量，JavaScript 将把它声明为一个全局变量！这通常不是你的初衷，却在无意中暴漏了应用程序的某些部分。
+var type = "Red",
+    attack = function() {
+        typeOfBird = type + " Bird";
+
+        return typeOfBird + " Bird Attacks!";
+    };
+
+console.log( window.type );       // I'm a global variable
+console.log( window.attack() );     // I'm a global function
+console.log( window.typeOfBird ); // I'm a global variable too :(
+
+3. 明确向 Window 添加对象
+
+你也有机会故意向全局命名空间暴漏变量。通过访问 window 对象并手动添加一个属性或方法，你可以很容易的做到这一点。在你的代码深处使用这项技术并不是一个好主意，你可以这么做，但是没什么价值。
+var type = "Red",
+    attack = function() {
+        typeOfBird = type + " Bird";
+ 
+        window.message = typeOfBird + " Attacks!";
+ 
+        return typeOfBird + " Bird Attacks!";
+    };
+ 
+console.log( window.type );       // I'm a global variable
+console.log( window.attack() );     // I'm a global function
+console.log( window.typeOfBird ); // I'm a global variable too :(
+console.log( window.message );    // I'm a global variable too :|
+
+4. 为什么全局对象是一个问题？ ⬆
+与你的代码冲突
+和你同属一个公司的开发人员，可能会定义在你的程序中已存在的同名函数、方法或属性，这是有风险的。如果你没有一套机制来减少全局命名空间中的条目，随着你的程序变得更大和更复杂，意外重新分配变量的风险随之增加。
+
+You may dismiss this reason because you have rigid code reviews and all your developers know your codebase inside out. If that describes you, then check out the next reason ;) 你可能会反驳这个原因，因为你拥有严格的代码审核，并且所有的开发人员都透彻了解你的代码库。如果你觉得这说的是你，那么看看下一个原因 ;)
+
+与你的代码和第三方库冲突
+拥有多个全局对象的另一个风险是，你的代码可能与你所使用的第三方库冲突。存在大量的库、插件和框架，并不是所有这些第三方库都了解和意识到要保持全局变量到最小集。你的代码和这些库可能会发生冲突，并覆盖彼此的行为，这可能导致意想不到的结果。
+
+你可能会反驳这个原因，因为你深入的审视你的团队所使用的所有第三方库，并且充分了解这些库暴露的全局变量。如果你觉得这说的是你，那么看看下一个原因 :)
+
+与你的代码和浏览器附加元件/扩展/插件冲突
+拥有多个全局对象的最后一个风险是，你的代码可能与浏览器本身冲突。什么！？！那以谷歌浏览器 Chrome 为例。Chrome 的插件基于 JavaScript，并且当你的网页加载后，你安装的所有插件会在你的网页上运行。你永远不会知道用户安装了什么插件，这就导致一个风险，这些附加元件会暴露全局变量并和你的代码库发生冲突。
+
+这似乎有些牵强？好吧，它仅仅一种可能，但是我确实看到过一个高调的网站（不想提是哪个）遇到了这个特殊问题。我试着使用这个网站，但是它崩溃了。我认识这个开发人员，然后我联系到了他。经过一番反复，结果是我曾经安装的一个插件导致了网站崩溃。我联系到插件作者，然后他们更新了代码，现在一切运行正常。
+
+5. 保护自己的多种方式 ⬆
+虽然上面的代码片段非常简短和简单，但是它们向全局命名空间暴露了太多的变量。那么，我们该如何保护自己呢？
+
+对象字面量
+防止全局变量扩展的最简单的方法是，使用一个对象字面量来收集所有全局对象，把它们附加到一个中间对象。
+11
+// Gather type & attack and make properties off higher level object
+var bird = {
+    type: "Red",
+    attack: function() {
+        console.log( this.type + " Bird Attacks!" );
+    }
+};
+ 
+console.log( window.bird );          // Only 1 global object!
+console.log( window.bird.type );     // Red
+console.log( window.bird.attack() ); // Red Bird Attacks! 
+
+立即调用的函数表达式
+解决全局问题的另一项技术是立即调用的函数表达式（IIFE）。这项技术比对象字面量更复杂，但是也更强大。这项继续允许开发人员向消费者公开公共和私有的属性和方法。
+
+在我们进入正题之前，先解释一些怪异的语法，稍后会看到。在 JavaScript 中，变量的作用域由函数作用域决定，而不是块级作用域。因为，假设如果在一条 'if' 语句中决定了一个变量，这个变量在包含它的函数的所有地方都是可见的。对于曾经使用 C、C++、C#、Java 或类似语言的开发人员来说，这个看起来有点不和谐。
+
+下面，我们将利用函数作用域这一特性来创建一个匿名函数（没有名字的函数），并立即调用它。
+
+// Error: JavaScript can't parse this correctly
+function() {
+    // All memory is contained within this scope
+}(); // <-- Immediately Invoked
+
+不幸的是，上面的代码片段在 JavaScript 中不能工作，因为不能正确的解析他。思路是对的，但是实现有一点点偏差。值得庆幸的，有一种简单的方式让 JavaScript 知道我们在做什么，就是用一组额外的括号包裹这个表达式。
+
+// JavaScript can parse this just fine now, yay!
+(function() {
+    // All memory is contained within this scope
+}()); // <-- Immediately Invoked
+
+下面的模式被称为 Revealing Module Pattern。你应该注意到，IIFE 被用于创建特殊的函数作用域，而且在末尾返回了作用域的一部分，它们是你想公开给对象的，而任何没有返回的部分将是私有的。
+// Revealing Module Pattern
+var bird = (function() {
+    var type = "Red",
+        power = "IIFE", // This is private
+        attack = function() {
+            console.log( type + " Bird Attacks with an " + power +  "!" );
+        };
+    
+    return { // Only the items returned are public
+        type: type,
+        attack: attack
+    };
+}());
+ 
+console.log( window.bird );          // Only 1 global object!
+console.log( window.bird.type );     // Public property
+console.log( window.bird.attack() ); // Public method accessing private var
+console.log( window.bird.power );    // Private variable, can't access 
+
+你可能也遇到过下面这种替代语法，它在很多库和框架中很流行（很受欢迎）。这种模式使用了 IIFE，但是传入了一个全局变量作为命名空间。代码片段 window.bird = window.bird || {} 以一种奇特的方式来检查 bird 对象是否存在，如果不存在就创建一个新对象。在 IIFE 中，添加到 bird 对象的都变为公开的，而其他的则都变为私有的。可以重复这种模式，用各种组件来构建一个库。
+
+(function( bird ) {
+    var power = "IIFE"; // This is private
+    
+    bird.type = "Red";
+    bird.attack = function() {
+        console.log( bird.type + " Bird Attacks with an " + power + "!" );
+    };
+}( window.bird = window.bird || {} ));
+ 
+console.log( window.bird );          // Only 1 global object!
+console.log( window.bird.type );     // Public property
+console.log( window.bird.attack() ); // Public method accessing private var
+console.log( window.bird.power );    // Private variable, can't access 
+
+6. 进攻！ ⬆
+下面是一个用 boxbox 构建的简版 Angry Birds，boxbox 是一个用于 box2dweb 的框架，由 Bocoup 的 Greg Smith 编写。
+按下空格键来发射红色小鸟，你也可以使用方向键。
+
+
+7. 结论 ⬆
+这些技术对一个前端应用程序是至关重要的，因为它可以保护自己免受其他代码的干扰，并且可以通过封装的方式组织你的代码。
+@sunnylost 补充：Dun, dun, daaaaaaaaaa! 应该是在模拟背景音乐，类似于这种 http://missingno.ocremix.org/musicpages/game_on.html

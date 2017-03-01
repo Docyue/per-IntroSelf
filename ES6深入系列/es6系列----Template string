@@ -1,0 +1,24 @@
+####es6系列----Template string
+// Template string
+
+-------------------------------------------------------------------------------------
+Template string
+-------------------------------------------------------------------------------------
+用ES6的新特性模板字符串，用反引号（\）来标识起始，用${}`来引用变量，而且所有的空格和缩进都会被保留在输出之中
+
+	$("#result").append(`
+	  There are <b>${basket.count}</b> items
+	   in your basket, <em>${basket.onSale}</em>
+	  are on sale!
+	`);
+
+React Router从第1.0.3版开始也使用ES6语法了，比如这个例子：
+	
+	<Link to={`/taco/${taco.name}`}>{taco.name}</Link>
+
+
+
+
+
+
+

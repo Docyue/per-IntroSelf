@@ -1,0 +1,185 @@
+移动端重构系列7——图标
+
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+这里我们把图标分为三种：背景图片，直接绘制，@font-face。如无特殊情况，图标的标签采用i标签
+
+
+背景图片
+
+首先我们会选择sprite形式，把所有的图标都放在一个大图中，然后考虑到retina屏，所以我们的图标应该设计为实际大小的2倍，然后设置background-size为实际大小。以下面的msg icon为例：
+
+icon msg
+
+图中的每个icon大小为24px，实际应用时，我们是以12px来使用的：
+
+%icon-msg{
+    display: inline-block;
+    vertical-align: -2px;
+    background:url(../images/icon-msg.png) no-repeat;
+    background-size:26px 26px; // 整个sprite图片大小的一半，注意不要采用50%，百分比是按元素大小来计算的，而不是背景图片大小
+}
+.icon-info{
+    @extend %icon-msg;
+    background-position: -14px 0;
+    width: 12px;
+    height: 12px;
+}
+.icon-alert{
+    @extend %icon-msg;
+    background-position: 0 -14px;
+    width: 12px;
+    height: 12px;
+}
+...
+当然有时候图标比较少，我们为了减少请求，也可以直接把图片转成base64格式写在css中，这里推荐一个在线转的工具：Encode Data URL
+
+直接绘制
+
+凭借优秀的css3，我们可以应用其中一些属性绘制一些简单的图标，如箭头等，这里我们以绘制checkbox两种状态为例：
+
+icon checkbox
+
+html：
+
+<i class="icon-checkbox active"></i>    
+<i class="icon-checkbox"></i>
+scss：
+
+$primary:                        #0078e7 !default;
+
+.icon-checkbox{
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    line-height: 1;
+    text-align: center;
+    margin-right: 5px;
+
+    &.active{
+        border-color: $primary;
+
+        &::after{
+            content: "";
+            width: 8px;
+            height: 3px;
+            border-bottom: 2px solid $primary;
+            border-left: 2px solid $primary;
+            display: block;
+            margin-top: 3px;
+            margin-left: 2px;
+            @include rotate(-45deg);
+        }   
+    }
+}
+active状态，通过after生成一个长方形，然后设置其border-bottom和border-left，再通过css3的rotate旋转45即可，那个勾就是两条边框。
+
+@font-face
+
+以sandal的字体图标为例，如果你觉得这些图标不适合你，你可以自己在icomoon中挑选合适的。
+
+icons
+
+sandal中字体图标使用方法：
+
+1、下载sandal放在d盘目录下，在你的scss文件中导入sandal的base文件（如果不需要生成样式，则导入function文件即可）及font-face文件
+
+@import "d:/sandal/base";
+@import "d:/sandal/ext/font-face/font-face";
+2、根据自己需要覆盖font-face文件夹中的变量，注意变量应该在导入font-face之前，可以覆盖的变量如下：
+
+$fontFamily:            icomoon !default;
+$fontFilePath:          "../fonts/icomoon" !default;
+$fontClassPrefix:       if !default; // icon-font
+$fontClassAllSwitch:    true !default;
+$fontClassOutput:       () !default;
+$fontPseudo:            true !default; // 是否采用伪元素（before）生成图标
+下面我们改变下class的前缀，然后输出所有的字体class
+
+@import "d:/sandal/base";
+$fontClassPrefix:      icon-font;
+@import "d:/sandal/ext/font-face/font-face";
+3、把font-face目录下的fonts文件夹拷贝进解析后的css文件夹同目录下，如css，js，fonts，images同目录
+
+根据上面的配置，贴出下面的html和解析后的css代码：
+
+html:
+
+<i class="icon-font-wifi"></i>
+<i class="icon-font-comment"></i>
+<i class="icon-font-user"></i>
+<i class="icon-font-map"></i>
+...
+css:
+
+.icon-font-wifi::before, .icon-font-comment::before, .icon-font-user::before, .icon-font-map::before,...{
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+@font-face {
+  font-family: icomoon;
+  font-weight: normal;
+  font-style: normal;
+  src: url("../fonts/icomoon.eot");
+  src: url("../fonts/icomoon.eot?#iefix") format("eot"), url("../fonts/icomoon.svg#icomoon") format("svg"), url("../fonts/icomoon.woff") format("woff"), url("../fonts/icomoon.ttf") format("truetype");
+}
+.icon-font-wifi::before, .icon-font-comment::before, .icon-font-user::before, .icon-font-map::before,...{
+  display: inline-block;
+  vertical-align: -2px;
+  font-family: icomoon;
+  font-size: 1.6rem;
+  line-height: 1;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.icon-font-wifi::before {
+  content: "\e62f";
+}
+.icon-font-comment::before {
+  content: "\e601";
+}
+.icon-font-user::before {
+  content: "\e632";
+}
+.icon-font-map::before {
+  content: "\e61b";
+}
+...
+一般我是直接绘制和字体图标都用，简单的直接绘制就好，所以为了区别两者的class，直接绘制的我使用icon为前缀，而字体图标使用if（icon-font缩写）为前缀，至于为什么要区别这两者的class呢，因为说不定你就得使用css3的属性选择器，比如i[class^="icon-"],i[class^="if-"]方便选择控制样式。
+
+关于变量$fontPseudo这里单独说明下，因为使用字体图标有两种方法，一种是把对应的字符编码直接写在html中，然后设置字体即可，另一种是html为空白标签，通过before或after的content来设置其内容，再设置字体。如果$fontPseudo为false，则解析的css为：
+
+@font-face {
+  font-family: icomoon;
+  font-weight: normal;
+  font-style: normal;
+  src: url("../fonts/icomoon.eot");
+  src: url("../fonts/icomoon.eot?#iefix") format("eot"), url("../fonts/icomoon.svg#icomoon") format("svg"), url("../fonts/icomoon.woff") format("woff"), url("../fonts/icomoon.ttf") format("truetype");
+}
+.icon-font-wifi, .icon-font-comment, .icon-font-user, .icon-font-map,...{
+  display: inline-block;
+  vertical-align: -2px;
+  font-family: icomoon;
+  font-size: 1.6rem;
+  line-height: 1;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+注：个人只所以采用伪元素及把样式写在伪元素里面，是因为有些时候可能想偷懒，一些图标不直接采用一个空白标签去定义，而是直接写在某个元素的before或after伪元素上，那个时候只需要采用sass的extend对应图标的伪元素即可。
+
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-icons.html

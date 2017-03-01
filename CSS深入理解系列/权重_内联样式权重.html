@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+	<style type="text/css"> 
+	   /* 
+		*A表示内联样式，只有1或者0两个值；
+		*B表示规则中ID的数量；
+		*C表示规则中除了ID、标签和伪元素以外的其它选择器数量；
+		*D表示规则中标签和伪元素的数量；
+		*/
+		*{padding:0;margin:0;} /* (A,B,C,D )计算权重为(0,0,0,0) */
+		
+		/* p{width:100px;background:green;} *//* (A,B,C,D )计算权重为(0,0,0,1) */
+		
+		.txt{width:100px;background:green;} /* (A,B,C,D )计算权重为(0,0,1,0) */
+		
+		#text{width:100px;background:pink;}/*  (A,B,C,D )计算权重为(0,1,0,0) */
+		
+		#nav ul li{width:100px;height:30px;background:#ccc;float:left;margin:5px;list-style:none;font:bold 14px/30px "微软雅黑";text-align:center;}/*  (A,B,C,D )计算权重为(0,1,0,2) */
+		
+		#nav ul li.current {color:red;}/* (A,B,C,D )计算权重为(0,1,1,2) */
+		
+		li:hover {color:orange ; font-weight: normal;}/* (A,B,C,D )计算权重为(0,0,0,2) 这里有important！,忽略权重*/
+		.current{background:blue!important;}
+		
+	</style>
+</head>
+<body>
+	<p  id="text" class="txt">测试文字</p><!-- (A,B,C,D )计算权重为(1,0,0,0)-->
+	<div id="nav">
+		<ul>
+			<li class="current " style="background:red;">计算权重</li>
+			<li>计算权重</li>
+			<li>计算权重</li>
+		</ul>
+	</div>
+</body>
+</html>

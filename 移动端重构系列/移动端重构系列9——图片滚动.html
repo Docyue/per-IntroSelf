@@ -1,0 +1,118 @@
+移动端重构系列9——图片滚动
+
+移动端重构系列mobile
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+这里我们采用swipe来做我们移动端的图片滚动
+
+
+滚动原理
+
+既然说到滚动，那跟我们上篇说到的iscroll多少有点关系吧。下面对swipe的滚动原理和iscroll的滚动原理简单分析下，以相同的结构为例：
+
+<div class="wrap">
+    <ul class="scroll">
+        <li></li>
+        <li></li>
+        ...
+    </ul>
+</div>
+相同的是都需要一个可以设置overflow为hidden的容器wrap。不同的是iscroll是对scroll元素进行滚动，通过设置其translate值或left/top值来实现滚动；而swipe是对li进行滚动，每个li有三种状态——prev，current和next，prev状态的时候向左偏移视窗的宽度，current状态正好在视觉范围内，next状态向右偏移视窗的宽度。
+
+实战
+
+同样其github已经有了很好的api使用说明，这里简单说下其参数配置：
+
+window.mySwipe = new Swipe(document.getElementById('slider'), {
+  startSlide: 2, //起始图片切换的索引位置，默认为0
+  speed: 400, //动画执行时间，单位毫秒，默认为300
+  auto: 3000, //设置自动切换时间，单位毫秒，无默认值
+  continuous: true, //无限循环的图片切换效果，默认为true
+  disableScroll: false, //阻止由于触摸而滚动屏幕，默认为false
+  stopPropagation: false, //阻止事件冒泡，默认为false
+  callback: function(index, elem) {}, //回调函数，滚动时调用
+  transitionEnd: function(index, elem) {} //回调函数，滚动的transition动画结束后调用。
+});
+除此之外，swipe还提供了几个比较实用的api，如下：
+
+ prev()上一页
+ next()下一页
+ getPos()获取当前页的索引
+ getNumSlides()获取所有项的个数
+ slide(index, duration)滑动方法
+demo
+
+1、简单demo
+
+css代码如下，图片大小最大为100%宽度：
+
+.wrap{
+  overflow: hidden;
+  visibility: hidden;
+  position: relative;
+  width: 100%;
+  height: 150px;
+}
+.wrap .inline-float{
+  overflow: hidden;
+  position: relative;
+}
+.wrap .inline-float li {
+  float: left;
+  width: 100%;
+  position: relative;
+  text-align: center;
+}
+.wrap .inline-float img {
+  max-width: 100%;
+}
+2、多张图片一组demo
+
+即每个li中多放几张图片，然后控制图片的宽度，以防止挤掉
+
+.wrap .inline-float img {
+  max-width: 30%;
+  margin-left: 10px;
+}
+3、全屏图片
+
+这个关键在于把图片设置背景图片，然后采用background-size来调整，这里采用的是100%，即li的宽高大小（demo中的四张图片均不同大小，然后缩放统一呈现出来的大小就是li的大小），可以根据自己的需要设置为cover或contain什么的
+
+.wrap .inline-float li {
+  float: left;
+  width: 100%;
+  height: 150px;
+  position: relative;
+  text-align: center;
+  background-repeat:no-repeat;
+  background-size: 100% 100%;
+  background-color:#f5f5f5;
+}
+注：上面的几个demo好像是直接调用Swipe函数，而不是new一个对象，js修改为如下（jsbin中一修改链接数字就变了）：
+
+window.addEventListener('DOMContentLoaded', function(){ 
+  var $slide = document.getElementById('swipeSlide');
+  var mySwipe = new Swipe($slide,{
+    auto: 1000
+  });
+});
+4、添加子弹导航
+
+js部分，设置callback函数，根据当前的位置为子弹导航添加激活状态
+
+window.addEventListener('DOMContentLoaded', function(){ 
+  var $slide = document.getElementById('swipeSlide'),
+      aBullet = $slide.querySelectorAll('.icon-bullet'),
+      len = aBullet.length;
+
+  var mySwipe = new Swipe($slide,{
+    auto: 3000,
+    callback: function(i){
+      while(len--) {
+        aBullet[len].classList.remove('active');
+      }
+      aBullet[i].classList.add('active');
+    }
+  });
+});
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-scroll-with-swipe.html

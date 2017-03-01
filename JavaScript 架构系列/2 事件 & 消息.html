@@ -1,0 +1,227 @@
+事件 & 消息 Events & Messaging
+目录
+1. 简介
+1.1 战报
+1.2 绿鸟的攻击
+2. 猪偷走了什么？
+3. 应用程序示例
+4. 紧耦合代码
+5. 消息类型
+5.1 观察者事件
+5.2 中介事件
+5.3 混合事件
+5.4 该用哪个？
+6. 附加资源
+7. 松耦合代码
+8. 攻击！
+9. 结论
+20 April 2013
+原文：Angry Birds of JavaScript: Blue Bird - Events
+1. 简介 ⬆
+
+一群无法无天的猪从无辜的小鸟那里偷走了所有的前端架构，现在小鸟们要把它们夺回来！一队特殊的小鸟英雄将攻击这些卑鄙的猪，直到夺回原本属于它们的前端 JavaScript 架构！鸟们最终会成功吗？它们会打败那些培根味儿的敌人吗？让我们一起揭示 JavaScript 之愤怒的小鸟系列的另一个扣人心弦的章节！
+
+1.1 战报 ⬆
+Red Bird - IIFE
+
+1.2 绿鸟的攻击 ⬆
+在这篇文章中，我们将看看蓝色小鸟，它通过触发事件和消息来分散穿透猪群的城堡。渐渐的，小鸟们将一个接一个地夺回属于它们的东西！
+
+2. 猪偷走了什么？ ⬆
+小鸟们过去经常用组件构建 Web 应用，而组件之间却是硬编码依赖关系。最终它们引入了事件和消息，开始学习如何降低耦合度。不幸的是，猪群在入侵中偷走了小鸟们的观察者秘密。一只蓝色小鸟被派去夺回被盗的东西，并恢复松耦合组件。
+
+3. 应用程序
+为了理解消息的必要性，我们先看看下面的 Web 应用，它从 Netflix 搜索电影。我们将展示这个应用的初始代码，然后重构它。
+
+4. 紧耦合代码 ⬆
+上面应用的第一个版本使用下面的 JavaScript 代码实现。看看这段代码，试着理解它。这可能很痛苦，但还是先忍一下 ;)
+
+$( document ).on( "click", ".term", function( e ) {
+    $( "input" ).val( $( this ).text() );
+    $( "button" ).trigger( "click" );
+});
+ 
+$( "button" ).on( "click", function( e ) {
+    var searchTerm = $( "input" ).val(),
+        url = "http://odata.netflix.com/Catalog/Titles?$filter=substringof('" + 
+            escape( searchTerm ) + "',Name)&$callback=callback&$format=json";
+ 
+    $( ".help-block" ).html( function( index, html ) {
+        return e.originalEvent ? 
+            html + ", " + "<a href='#' class='term'>" + searchTerm + "</a>" : html;
+    });
+ 
+    $.ajax({
+        dataType: "jsonp",
+        url: url,
+        jsonpCallback: "callback",
+        success: function( data ) {
+            var rows = [];
+            $.each( data.d.results, function( index, result ) {
+                var row = "";
+                if ( result.Rating && result.ReleaseYear ) {
+                    row += "<td>" + result.Name + "</td>";
+                    row += "<td>" + result.Rating + "</td>";
+                    row += "<td>" + result.ReleaseYear + "</td>";
+                    row = "<tr>" + row + "</tr>";
+                    rows.push( row );
+                }
+            });
+            $( "table" ).show().find( "tbody" ).html( rows.join( "" ) );
+        }
+    });
+});
+
+上面的代码示例是一个典型的 jQuery 示例，在互联网上随处可见。这段代码可以工作，但是在一个地方放置了很多不同功能的代码。事件处理、数据检索和数据处理都混在一起。你可以想象一下，这段代码可能会继续增长，从而变得越来越容易出现错误。在我们想得太远之前，先顺便看看有些什么事件，以及事件有些什么类型。
+
+5. 消息类型 ⬆
+5.1 观察者事件 ⬆
+如果你熟悉 Web 前端开发的话，观察者事件很可能是最常用的一种事件。在 DOM 中，你可以为一个元素添加事件处理函数。元素直接引用了回调函数，当事件发生时回调函数被调用。
+
+document.getElementById( "bird" )
+    // Native addEventListener attaches observer to the DOM element
+    .addEventListener( "click", function() { console.log( "Catapult!" ); }, false );
+ 
+$( "#bird" )
+    // Old school event helpers attaches observer to the DOM element
+    .click( function() { console.log( "Flying through the air..." ); } )
+    // Old school bind method attaches observer to the DOM element
+    .bind( "click", function() { console.log( "COWABUNGA!" ); } )
+    // New school 2 parameter on method attaches observer to the DOM element
+    .on( "click", function() { console.log( "Destroy those pesky pigs!" ); } );
+ 
+// Event is triggered and the list of observers are notified
+$( "#bird" ).trigger( "click" );
+
+5.2 中介事件 ⬆
+在过去几年的 Web 前端开发中，中介事件或消息变得越来越普遍。其主要思想是用另外一个实体跟踪消息的发布和订阅。中介事件与观察者事件的主要区别在于，它不直接引用触发事件的主体。
+
+var channel = postal.channel(),
+    $lastUpdated = $( "#lastUpdated" );
+ 
+// Subscribe to all bird.launch messages
+channel.subscribe( "bird.launch", function( data ) {
+    console.log( "Launch the blue birds at a " + data.angle + " angle!" );
+});
+ 
+// Subscribe to all bird.reset messages
+channel.subscribe( "bird.reset", function( data ) {
+    console.log( "Resetting blue birds to the catapult." );
+});
+ 
+// Subscribe to all messages that match the bird.* wildcard!
+channel.subscribe( "bird.*", function( data ) {
+    $lastUpdated.text( moment().format( "MMMM Do YYYY, h:mm:ss a" ) ); 
+});
+ 
+// Publish some messages with optional data
+channel.publish( "bird.launch", { angle: 45 } );
+channel.publish( "bird.reset" );
+
+有几个库可以简化中介事件。下面是一份可供选择的清单。个人推荐试试 Jim 的 postal.js 库。
+Ben Alman's (@cowboy) Tiny jQuery Pub/Sub library
+Peter Higgin's (@phiggins) pubsub.js library
+Jim Cowart's (@ifandelse) postal.js library ← Recommended
+Dustin Diaz's (@ded) reqwest library
+appendTo's (@appendTo) AmplifyJS Pub/Sub component
+
+5.3 混合事件 ⬆
+另外一种事件则混合了观察者事件和中介事件。它看起来像一个中介事件，但如果你仔细看的话，可以从事件的起源追溯到最初的主体。一个很好的例子是 jQuery 的代理事件模型。代理事件很棒，因为它基于事件沿着 DOM 树向上冒泡的概念，所以我们可以跟踪到事件源。
+
+// Observer is attached to the #pigs element where impact events are delegated
+$( "#pigs" ).on( "impact", ".pig", function( e ) {
+    console.log( "I know which pig was impacted: " + e.target.innerHTML );
+    console.log( "I know where the subscribers are listed: " + e.delegateTarget.id );
+    console.log( "I can invoke another subscriber if I want!" );
+    $._data( e.delegateTarget, "events" ).secret[ 0 ].handler( e );
+    $( this ).text( "Bacon" );
+});
+ 
+$( "#pigs" ).on( "secret", ".pig", function( e ) {
+    console.log( "Shh, I'm hiding. Don't tell anyone..." );
+});
+ 
+// Event is triggers on the .pig element and bubble up to the #pigs element
+$( ".pig:first" ).trigger( "impact" );
+
+顺便说一句，我不建议使用 $._data() 方法，因为它不是公开方法，不能保证在未来的 jQuery 版本中是可用的。它是 jQuery 目前在使用的一个内部方法。我想告诉你的是，订阅者不需要一个真正的中介事件也能方便的获取信息。不要误会我的意思，我很喜欢 jQuery 的代理事件。我只想表达它是上述两种概念混合后的结果。
+
+5.4 该用哪个？ ⬆
+概念都讲清楚了，但是该使用哪些类型的事件或消息，以及何时使用呢？这是一个好问题，我的朋友 Jim 最近的一篇文章中也提到了这个问题。下面他文章的一段引用...
+
+组件内部使用观察者，在组件之间使用中介者。
+Jim 推荐模块内部的通信使用观察者事件（jQuery 的 .on() 方法），组件之间的通信则使用中介事件（postal.js）。
+
+Jim 在他的文章中提出的另一项技术是提升观察者事件为中介事件，这样可以两全其美。他展示了一些很棒的例子。我推荐你去看看他的文章，在下面的参考资料中用粗体标记了出来。
+
+6. 附加资源 ⬆
+如果你想了解上述概念的更多信息，读读下面关于事件和消息的资源。
+
+7. 松耦合代码 ⬆
+我原打算用 Backbone.js 或构造函数来编写下面的代码，但是为了保持简单和表达消息的理念，我把它们都移除了。因此，虽然这可能不是实际代码库的代码，但我还是希望能表达的清楚些。
+
+var channel = postal.channel();
+ 
+$( document ).on( "click", ".term", function( e ) {
+    var term = $( this ).text();
+    
+    e.preventDefault();
+    $( "input" ).val( term );
+    channel.publish( "searchTerm.changed", { term: term } );
+});
+ 
+$( "button" ).on( "click", function() {
+    channel.publish( "searchTerm.changed", { term: $( "input" ).val() } );
+});
+ 
+channel.subscribe( "searchTerm.changed", function( data ) {
+    netflix.getTitles( data.term, function( titles ) {
+        channel.publish( "netflix.titles.updated", titles );
+    });    
+});
+ 
+channel.subscribe( "searchTerm.changed", function( data ) {
+    $( ".help-block" ).html( function( index, html ) {
+        return ~html.indexOf( data.term ) ? html :
+            html + ", " + "<a href='#' class='term'>" + data.term + "</a>";
+    });
+});
+ 
+channel.subscribe( "netflix.titles.updated", function( titles ) {
+    var rows = [];
+    $.each( titles, function( index, result ) {
+        var row = "";
+        if ( result.Rating && result.ReleaseYear ) {
+            row += "<td>" + result.Name + "</td>";
+            row += "<td>" + result.Rating + "</td>";
+            row += "<td>" + result.ReleaseYear + "</td>";
+            row = "<tr>" + row + "</tr>";
+            rows.push( row );
+        }
+    });
+    $( "table" ).show().find( "tbody" ).html( rows.join( "" ) );
+});
+ 
+window.netflix = {
+    getTitles: function( term, callback ) {
+        var url = "http://odata.netflix.com/Catalog/Titles?$filter=substringof('" +
+                escape( term ) + "',Name)&$callback=callback&$format=json";
+      
+        $.ajax({
+            dataType: "jsonp",
+            url: url,
+            jsonpCallback: "callback",
+            success: function( data ) { callback( data.d.results ); }
+        });
+    }
+};
+
+8. 攻击！ ⬆
+下面是一个用 boxbox 构建的简版 Angry Birds，boxbox 是一个用于 box2dweb 的框架，由 Bocoup 的 Greg Smith 编写。
+按下空格键来发射蓝色小鸟，你也可以使用方向键。如果花了很长时间也不能摧毁猪群，那么你可能要考虑多按几次空格键了 ; 
+
+9. 结论 ⬆
+在 Web 应用中可以使用事件和消息实现组件通信。事件允许一个组件同自身通信，消息则允许一个组件以非硬编码的方式监听其他组件。
+还有许多其他的前端架构技术被猪群偷走了。在下篇文章中，另一只愤怒的小鸟将继续复仇！Dun, dun, daaaaaaa!
+
+@sunnylost 补充：Dun, dun, daaaaaaaaaa! 应该是在模拟背景音乐，类似于这种 http://missingno.ocremix.org/musicpages/game_on.html

@@ -1,0 +1,133 @@
+移动端重构系列6——切入切出动画
+
+作者：结一 日期：2014-07-01 点击：186
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+因为后面的几篇文章都需要用到切入切出动画什么的，所以先把这个说下。为了简单起见，我们这里只讨论translate偏移动画（translate比起绝对定位的top/left/right/bottom要高效），而如其他的旋转缩放淡入淡出什么的道理都一样。
+
+
+transition动画
+
+先定义要运动的元素在视觉范围之外，以左方向进入为例，同时定义transition：
+
+.demo{
+    @include translate3D(-2000px, 0, 0);
+    -webkit-transition: -webkit-transform 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out;
+}
+从进入视觉范围来说，不论方向从上下还是左右，最终都归于0，所以进入的时候添加class translate-in，而离开的时候去掉translate-in即可
+
+.translate-in{
+    @include translate3D(0, 0, 0);
+}
+animation动画
+
+先定义要运动的元素在视觉范围之外，同样以左方向为例：
+
+.demo{
+    @include translate3D(-2000px, 0, 0);
+}
+再定义keyframes：
+
+// 从左向右方向进入动画
+@mixin left-in($startX: -2000px, $endX: 0) {
+    @include keyframes(left-in) {
+        0% {
+            @include translate3d($startX, 0, 0);
+        }
+        100% {
+            @include translate3d($endX, 0, 0);
+        }
+    }
+    .left-in {
+        @include animation-name(left-in);
+        @extend %animated;
+    }
+}
+
+// 从右向左方向消失动画
+@mixin left-out($startX: 0, $endX: -2000px) {
+    @include keyframes(left-out) {
+        0% {
+            @include translate3d($startX, 0, 0);
+        }
+        100% {
+            @include translate3d($endX, 0, 0);
+        }
+    }
+    .left-out {
+        @include animation-name(left-out);
+        @extend %animated;
+    }
+}
+调用上面定义的keyframes，元素进入视觉范围添加class left-in，元素离开视觉范围则替换left-in为left-out，动画结束后调用animationend事件，删除left-out
+
+@include left-in;
+@include left-out;
+解析后的css为：
+
+.left-in, .left-out {
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+@-webkit-keyframes left-in {
+  0% {
+    -webkit-transform: translate3d(-2000px, 0, 0);
+  }
+
+  100% {
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes left-in {
+  0% {
+    transform: translate3d(-2000px, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+.left-in {
+  -webkit-animation-name: left-in;
+  animation-name: left-in;
+}
+
+@-webkit-keyframes left-out {
+  0% {
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    -webkit-transform: translate3d(-2000px, 0, 0);
+  }
+}
+@keyframes left-out {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: translate3d(-2000px, 0, 0);
+  }
+}
+.left-out {
+  -webkit-animation-name: left-out;
+  animation-name: left-out;
+}
+总结
+
+transition动画与animation动画的区别在于：
+
+1、transition动画只能定义开始和结束位置，中间无法定义；而keyframes则可以定义n帧作为中间的过渡帧。
+
+2、对于切入切出动画来说，transition动画我们只需添加删除一个class即可完成，而animation动画则需要切换两个class，再在最后删除class，比较复杂。
+
+3、如果你的动画不需要定制中间帧，那直接使用transition动画即可，切换一个class就可以了，运动结束时候可以js调用transitionend函数，而如果需要定制中间帧，那么还是animation，当然animation的事件有三个animationstart，animationiteration，animationend
+
+如需转载，烦请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-slider-animation.html

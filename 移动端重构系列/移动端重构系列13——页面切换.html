@@ -1,0 +1,148 @@
+移动端重构系列13——页面切换
+
+移动端重构系列mobile
+极客网
+本系列文章，如果没有特别说明，兼容安卓4.0.4+
+
+前面说的切入切出动画，一般用来前面的panel，popup，modal等效果，本篇主要说下整个页面的切换。
+
+布局，还是布局
+
+在分析页面滑动之前，我们再来讨论下之前的结构：
+
+
+<header class="header"></header>
+<div class="wrap-page">
+    <section class="page"></section>
+    <section class="page"></section>
+    <section class="page"></section>
+    ...
+</div>
+<footer class="footer"></footer>
+现在我们要设计page是左右滑动，首先得保证各个page在同一水平线上吧。使元素处在同一水平线的方法很多，float/position/flex/inlin-block等都可以，而这里将采用绝对定位然后配合translate，具体原因大家可以自己分析下，这里不再细说。既然page采用绝对定位，而之前的wrap-page也是采用绝对定位，所以我们有必要进一步细化下，之前我们把滚动放在wrap-page上，现在将会移动到page上，顺便把之前说的header和footer部分距离一并收拾下
+
+demo如下：
+
+ header+page
+ page+footer
+ header+page+footer
+css关键代码如下，主要分为布局结构class和状态结构class，两者结合使用:
+
+// 整体布局
+.header,.footer,.wrap-page{
+  position:absolute;
+  left:0;
+  right:0;
+  background-color: #fff;
+}
+.header,.footer{
+  height:44px;
+  background-color: #fff;
+  text-align: center;
+  z-index:900;
+  line-height:44px;
+}
+.header{
+  top: 0;
+  border-bottom: 1px solid #f00;
+}
+.footer{
+  bottom: 0;
+  border-top: 1px solid #f00;
+}
+.wrap-page{
+  top: 0;
+  bottom: 0;
+}
+
+// page布局   
+// 默认有header无footer，所以top为header的高度，bottom为0    
+.page {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  top: 44px;
+  bottom: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
+// layout
+// 无header有footer，所以page排除footer的高度，top为0，bottom为footer的高度
+.page-not-footer {
+  top: 0;
+  bottom: 44px;
+}
+// 有header和footer，所以page排除两者的高度，top为header的高度，bottom为footer的高度
+.page-not-header-footer {
+  top: 44px;
+  bottom: 44px;
+}
+
+// page status
+.page-active {
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+}
+.page-prev {
+  -webkit-transform: translate3d(-100%, 0, 0);
+  transform: translate3d(-100%, 0, 0);
+}
+.page-next {
+  -webkit-transform: translate3d(100%, 0, 0);
+  transform: translate3d(100%, 0, 0);
+}
+这样我们把对header和footer的距离交给page来控制，免去了js动态增删class，当然如果你要使用iscroll来实现滚动，那么现在就得在page下面再嵌套一层了
+
+动画
+
+下面的四种页面滑动的动画，均由忆龙Lau实践研究得出，我这借花献佛。因为最后我们使用的第四种动画，所以前三种只说下原理，感兴趣的可以私下研究，这里只提供第四种动画的demo（当然也欢迎您来补上前三个动画）
+
+为了简单起见，这里我们暂时不研究header和footer的变化，只研究page的滚动（header和footer部分变化我们以后再说），
+
+容器整体滑动
+
+使用容器滚动的时候，因为设置的是wrap-page容器的translate滑动，所以就不需要page status这几个class了，然后所有的page页面一字排开，按照translate距离0，100%，200%，300%等差数列排开，如下图：
+
+page slide 1
+
+单个页面滑动
+
+主要是将要呈现的页面的一半先覆盖在目前页面上并设置opacity为0，然后使用transition动画，改变opacity及translateX为0
+
+page slide 2
+
+双页联动滑动
+
+这种将会涉及两个page页面的动画，当前页面和即将呈现的页面同时向左或向右偏移100%，两者的运动频率一样，跟第一种容器整体滑动的效果看起来是没什么区别的
+
+page slide 3
+
+双页视差滑动
+
+在第三种的基础上提供一种视差效果，让当前页面的离开和即将呈现的页面运动频率不一致，以达到视觉上的美感
+
+page slide 4
+
+双页视差滑动 demo
+
+进入离去的css如下：
+
+.page-in {
+  -webkit-transition: -webkit-transform 300ms cubic-bezier(0.42, 0, 0.58, 1);
+  -ms-transition: transform 300ms cubic-bezier(0.42, 0, 0.58, 1);
+  transition: transform 300ms cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+.page-out {
+  -webkit-transition: -webkit-transform 400ms cubic-bezier(0.42, 0, 0.58, 1) 0.1s;
+  -ms-transition: transform 400ms cubic-bezier(0.42, 0, 0.58, 1) 0.1s;
+  transition: transform 400ms cubic-bezier(0.42, 0, 0.58, 1) 0.1s;
+}
+关于这个demo有下面几点需要注意：
+
+ page-in进入的动画比较快，然后无延迟；page-out离去的动画比较慢，延迟0.1s
+ 运动函数的选择。这里使用的是cubic-bezier(0.42, 0, 0.58, 1)，话说这是忆龙Lau无数次尝试后，偶然从一个国外站点翻阅的得到的一个最佳运动曲线。
+ 运动结束后得移除各自的page-in和page-out类
+如需转载，请注明出处：http://www.w3cplus.com/mobile/mobile-terminal-refactoring-slider.html

@@ -1,0 +1,125 @@
+代码质量 Coding Standard, Linting, Analysis
+目录
+1. 简介
+1.1 战报
+1.2 白鸟的攻击
+2. 猪偷走了什么？
+3. JavaScript 编码标准
+4. JavaScript Linting
+5. JavaScript Analysis
+6. 进攻！
+7. 结论
+18 April 2013
+原文：Angry Birds of JavaScript: White Bird Linting
+私货：nuysoft/Aristotle
+1. 简介 ⬆
+
+
+一群无法无天的猪从无辜的小鸟那里偷走了所有的前端架构，现在小鸟们要把它们夺回来！一队特殊的小鸟英雄将攻击这些卑鄙的猪，直到夺回原本属于它们的前端 JavaScript 架构！鸟们最终会成功吗？它们会打败那些培根味儿的敌人吗？让我们一起揭示 JavaScript 之愤怒的小鸟系列的另一个扣人心弦的章节！
+1.1 战报 ⬆
+Red Bird - IIFE
+Blue Bird - Events
+Yellow Bird - RequireJS
+Black Bird - Backbone
+1.2 白鸟的攻击 ⬆
+在这篇文章中，我们将看看白鸟，它看似无害，但当它祭出严格编码风格和质量突击检查时，猪群无疑要开始尖叫了。渐渐的，小鸟们将一个接一个地夺回属于它们的东西。
+
+2. 猪偷走了什么？ ⬆
+小鸟们学习如何编程的方式略有不同。有些小鸟是自学成才，而有些小鸟则是上大学学习计算机科学。即使这些群体中不乏经验丰富和才华惊艳之才，但是当小鸟们聚在一起构建它们的第一个大型应用时，这变成了一场巨大的灾难。每个小鸟都认为它们的编码标准才是正确的方法，这种想法导致了问题和冲突。有一天出现了一只智慧的白鸟，它建议大家制定一套通用的编码实践并遵循它。此外，这只白鸟还引入了一些工具，来帮助大家确立标准和发现问题，并提前关注可能恶化的问题。
+
+然而在最近的一次入侵中，猪群偷走了小鸟们的编码标准文档和代码质量工具！现在，一只白鸟被派去夺回被盗的文档和工具。它将用压倒性的质量之力摧毁猪群，夺回属于它们的东西。
+
+3. JavaScript 编码标准 ⬆
+有很多编码标准可供选择。重要的是选择一个并坚持下去。如果是你在一个团队中，其他成员也应该在某些标准上达成一致意见。如果找不到大家都同意的标准，那么选择一个近似的，并允许有一些例外。
+
+通过这样做你会发现...
+
+开发人员将能更块的理解其他人的代码
+合并代码库不再是一件可怕的事
+建立标准确实可以减少缺陷
+代码库更统一
+关于谁才是正确的分歧将减少
+...写下你发现的好处...
+这里有一些我知道的编码标准...
+
+Douglas Crockford 的 JavaScript 编程语言代码约定
+Rich Waldron（@rwaldron）的 Idiomatic.js - 通用一致的 JavaScript 编写原则 ← 推荐
+jQuery 的 JavaScript 风格指南 ← 推荐
+Google 的 JavaScript 风格指南
+Addy Osmani 曾写过一篇很棒的文章 [JavaScript 风格指南和美化工具]，深入地阐述了各种代码风格，并用示例演示了如何遵守推荐的标准。
+
+4. JavaScript Linting ⬆
+Linter 工具可以帮助查找代码中的错误和潜在问题。通常 Linter 还可以帮助你实施编码标准，无论你选择的是上述列表中的哪种编码标准。
+
+实际上有几种 JavaScript Linter 可供选择，其中我最喜欢的是 Anton Kovalyov 创建的 JSHint。JSHint 是社区共同努力的成果，前身是广受欢迎的 JSLint 库，由 Douglas Crockford 编写。关注这个项目的成长过程让我很享受。JSHint 有大量的选项，你可以选择开启或禁用，然后找出最适合团队的配置。
+
+JSHint 可以执行的标准检查包括...
+
+用 === 代替 ==
+使用未定义的变量
+声明未使用的变量
+在循环中声明函数
+还有很多...
+完整的选项列表请参阅 JSHint 文档。
+
+我很喜欢最近添加的一些选项，包括：
+
+maxcomplexity - 最大循环复杂度（参见后面引用的维基百科）
+maxstatements - 函数允许的语句条数最大值
+maxparams - 函数允许的参数个数最大值
+maxdepth - 函数允许的最大深度
+maxlen - 单行代码的最大长度
+“一段代码的循环复杂度是指代码中线性独立路径的个数。” -- http://en.wikipedia.org/wiki/Cyclomatic_complexity
+
+/*jshint maxparams:3, maxdepth:2, maxstatements:5, maxcomplexity:3, maxlen:80 */
+/*global console:false */
+ 
+(function( undefined ) {
+    "use strict";
+ 
+    function test1( arg1, arg2, arg3, arg4 ) {
+        console.log( "too many parameters!" );
+        if ( arg1 === 1 ) {
+            console.log( arg1 );
+            if ( arg2 === 2 ) {
+                console.log( arg2 );
+                if( arg3 === 3 ) {
+                    console.log( "too much nesting!" ); console.log( arg3 ); console.log( arg4 );
+                }
+            }
+        }
+        console.log( "too many statements!" );
+    }
+ 
+    test1( 1, 2, 3, 4 );
+}());
+
+JSHint 在检查上面的代码片段后生成下面的错误：
+
+幸运的是， 你不必每次都运行 JSHint 来检查整个网站的代码。有几种方式可以将 JSHint 集成到你的代码编辑器：
+
+VIM Plugin (jshint.vim)
+Sublime Text 2 Extension (Sublime Linter)
+TextMate Bundle (JSHint TextMate Bundle)
+Visual Studio Web Essentials
+Eclipse IDE (JSHint Integration)
+在无敌神鹰一文中，我们将谈论使用 JSHint 的另一种方式：命令行，以及如何使 JSHint 自动化。
+
+5. JavaScript Analysis ⬆
+代码 Linting 很棒，但有时我们希望能看到代码库的简要概览，并且可以深入分析代码的一小部分。幸运的是有一个叫 Plato 工具可以分析你的代码，并提供可视化的报表，你可以通过报表浏览应用的复杂度。这个工具需要 Node 环境，通过 npm install plato -g 安装。
+
+译注：Plato - 柏拉图（古希腊哲学家）。
+安装 Plato 之后，你可以在命令行中运行 plato -r -d report myDirectory，将递归分析 myDirectory 目录中的代码，并将结果导出到 report 目录。
+
+如果你在 jQuery 的源代码上运行 Plato，将生成类似下面的报告。正如你所见，平均代码行数随着时间减少，这是个好现象。可维护性也不错，然后柱状图详细列出了每个 JavaScript 文件的可维护性。再往下的柱状图列出了每个文件的代码行数、每个文件的预计错误数，以及每个文件的 JSLint 错误数。
+如果深入到某个文件，你将看到下面的视图。这份报告最棒的地方是用一种容易掌握的方式展示了每个函数的复杂度和代码行数。你可以快速跳到文件的不同部分，审查该工具标识出的关注点。
+你可以到 Plato 的 GitHub 库查看上面的 jQuery 报告。
+
+6. 进攻！ ⬆
+下面是一个用 boxbox 构建的简版 Angry Birds，boxbox 是一个用于 box2dweb 的框架，由 Bocoup 的 Greg Smith 编写。
+Press the space bar to launch the White Bird and you can also use the arrow keys. 按下空格键来发射白鸟，你也可以使用方向键。
+
+
+7. 结论 ⬆
+前端 Web 应用可以很快变得相当复杂。如果开发人员不能达成共识，事情可能马上土崩瓦解，特别是在一个大型项目中。形成统一的代码标准和使用一些工具来避免问题，才能真正有助于项目成功。
+@sunnylost 补充：Dun, dun, daaaaaaaaaa! 应该是在模拟背景音乐，类似于这种 http://missingno.ocremix.org/musicpages/game_on.html
