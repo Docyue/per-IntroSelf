@@ -8,7 +8,6 @@ var request = require('request');
 
 var i = 0;
 var actUrl = 'http://book.zongheng.com/quanben/c0/c0/b9/u1/p1/v9/s1/t0/ALL.html';
-http://book.zongheng.com/quanben/c0/c0/b9/u1/p2/v9/s1/t0/ALL.html
 
 
 fetchPage();
