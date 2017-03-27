@@ -1,0 +1,116 @@
+新产品为了效果，做的比较炫，用了很多的图片和JS，所以前端的性能是很大的问题，分篇记录前端性能优化的一些小经验。
+http://www.blogjava.net/BearRui/archive/2010/04/26/web_performance.html
+
+第一篇：HTTP服务器
+
+    因tomcat处理静态资源的速度比较慢，所以首先想到的就是把所有静态资源(JS,CSS,image,swf)
+
+    提到单独的服务器，用更加快速的HTTP服务器，这里选择了nginx了，nginx相比apache，更加轻量级，
+
+    配置更加简单，而且nginx不仅仅是高性能的HTTP服务器，还是高性能的反向代理服务器。
+
+    目前很多大型网站都使用了nginx,新浪、网易、QQ等都使用了nginx，说明nginx的稳定性和性能还是非常不错的。
+
+1. nginx 安装(linux)
+
+    http://nginx.org/en/download.html 下载最新稳定版本
+
+    根据自己需要的功能先下载对应模板，这里下载了下面几个模块：
+    openssl-0.9.8l，zlib-1.2.3，pcre-8.00
+
+    编译安装nginx:
+    ./configure
+    --without-http_rewrite_module
+    --with-http_ssl_module
+    --with-openssl=../../lib/openssl-0.9.8l
+    --with-zlib=../../lib/zlib-1.2.3
+    --with-pcre=../../lib/pcre-8.00
+    --prefix=/usr/local/nginx
+
+    make
+
+    make install
+
+-------------------------------------------------------------------------------------------------------
+2、nginx处理静态资源的配置
+
+     #启动GZIP压缩CSS和JS
+     gzip  on;
+     # 压缩级别 1-9,默认是1，级别越高压缩率越大，当然压缩时间也就越长
+     gzip_comp_level 4;
+     # 压缩类型
+     gzip_types text/css application/x-javascript;
+
+     # 定义静态资源访问的服务，对应的域名:res.abc.com
+     server {
+        listen       80;
+        server_name  res.abc.com;
+
+      # 开启服务器读取文件的缓存，
+      open_file_cache max=200 inactive=2h;
+      open_file_cache_valid 3h;
+      open_file_cache_errors off;
+      charset utf-8;
+
+      # 判断如果是图片或swf，客户端缓存5天
+      location ~* ^.+.(ico|gif|bmp|jpg|jpeg|png|swf)$ {
+      root   /usr/local/resource/;
+      access_log off;
+      index  index.html index.htm;
+      expires 5d;
+      }
+
+      # 因JS,CSS改动比较频繁，客户端缓存8小时
+      location ~* ^.+.(js|css)$ {
+         root   /usr/local/resource/;
+         access_log off;
+         index  index.html index.htm;
+         expires 8h;
+              }
+      # 其他静态资源
+      location / {
+         root   /usr/local/resource;
+         access_log off;
+         expires 8h;
+      }
+
+-------------------------------------------------------------------------------------------------------
+3、nginx 反向代理设置
+  # 反向代理服务，绑定域名www.abc.com
+    server {
+    listen       80;
+    server_name  www.abc.com;
+    charset utf-8;
+
+  # BBS使用Discuz!
+  # 因反向代理为了提高性能，一部分http头部信息不会转发给后台的服务器，
+  # 使用proxy_pass_header 和 proxy_set_header 把有需要的http头部信息转发给后台服务器
+  location ^~ /bbs/ {
+     root   html;
+     access_log off;
+     index index.php;
+     # 转发host的信息，如果不设置host,在后台使用request.getServerName()取到的域名不是www.abc.com，而是127.0.0.1
+     proxy_set_header Host $host;
+     # 因Discuz! 为了安全，需要获取客户端User-Agent来判断每次POST数据是否跟第一次请求来自同1个浏览器，
+     # 如果不转发User-Agent,Discuz! 提交数据就会报"您的请求来路不正确，无法提交"的错误
+     proxy_pass_header User-Agent;
+     proxy_pass http://127.0.0.1:8081;
+  }
+
+  # 其他请求转发给tomcat
+  location / {
+     root   html;
+     access_log off;
+     index index.jsp;
+     proxy_pass http://127.0.0.1:8080;
+  }
+
+  error_page   500 502 503 504  /50x.html;
+      location = /50x.html {
+          root   html;
+      }
+  }
+
+  nginx详细配置参考：http://wiki.nginx.org/
+
+PS：如果安装提示GCC not found，运行下面命令安装就可以(apt-get install build-essential)，仅限debian
