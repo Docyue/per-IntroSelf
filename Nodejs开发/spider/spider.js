@@ -141,17 +141,14 @@ function setStoryContent($, charpersItemText, newItem){
 	let itemStoryContent= {
 		storyName: newItem.titleText,
 		storyCharpters: charpersItemText,
-		storyCharptersContent: $('#chapterContent').text().trim()
+		storyCharptersContent: $('#chapterContent').text()
 	}
-	let charpertContent= itemStoryContent.storyCharpters +'/n' +itemStoryContent.storyCharptersContent;
-
-	fs.writeFile('./data/'+itemStoryContent.storyName+'.txt',charpertContent,function(err){
+	let charpertContent= itemStoryContent.storyCharpters +'<br/>' +itemStoryContent.storyCharptersContent;
+	console.log(charpertContent);
+	fs.writeFile('./data/'+itemStoryContent.storyName+'.txt', charpertContent, function(err){
 		if(err) throw err;
-		console.log("小说写入成功");
+		// console.log("小说写入成功");
 	})
 }
-
-
-
 
 
