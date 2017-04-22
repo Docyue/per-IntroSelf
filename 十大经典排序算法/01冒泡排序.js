@@ -106,3 +106,4 @@ var arr = [1,5,22,3,666,3,55,77,5];
 // 排序去重-------3
 console.log(bubbleSortQCS(arr));
 
+
