@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+	#fiveSection table{border-collapse:collapse;margin: 0 auto;}
+	#fiveSection table td{border:1px solid #0f0f0f;width:60px;height:60px;}
+	#fiveSection table .activeA{background:black;border-radius:30px;}
+	#fiveSection table .activeB{background:#aaa;border-radius:30px;}
+	</style>
+</head>
+<body>
+	<div id="fiveSection">
+
+	</div>
+	
+	<script src="./babel.min.js"></script>
+	<script type="text/babel">
+		// 创建棋盘
+		let fiveSection = document.querySelector('#fiveSection');
+		let sectionX = 8;
+		let sectionY = 9;
+		fiveSection.appendChild(creatTable(sectionX,sectionY));
+		let goFirst = true;
+		let personA = [];
+		let personB = [];
+
+		// 游戏 样式生成
+		function doGame(){
+			var event = event || window.event;         //IE doesn't pass in the event object  
+			var target = event.target || event.srcElement; //IE uses srcElement as the target 
+			// 初始化行
+			let allTr = target.parentNode.parentNode.childNodes;
+			for (var i = 0; i < allTr.length; i++) {
+				if(allTr[i].className.indexOf('activeLine') != -1){
+					allTr[i].className = allTr[i].className.replace("activeLine","");
+				}
+				// 初始化块
+				for (var j = 0; j < allTr[i].childNodes.length; j++) {
+					let allTd =  allTr[i].childNodes[j];
+					if(allTd.className.indexOf('activeTd') != -1){
+						allTd.className = allTd.className.replace("activeTd","");
+					}
+				};
+			};
+			// 活跃块
+			if(goFirst){
+				target.className = 'activeTd activeA';
+			}
+			else{
+				target.className = 'activeTd activeB';
+			}
+			// 活跃行
+			target.parentNode.className = 'activeLine';
+
+			getPosition(target, sectionX, sectionY);
+			goFirst = !goFirst;
+		}
+		// 游戏 获取位置
+		function getPosition(obj, sectionX, sectionY){
+			let actTr = obj.parentNode;
+			let allTr = actTr.parentNode.childNodes;
+			let actAllTd = actTr.childNodes;
+			let actPos = [];
+			// 活跃块所在的x位置
+			for (var j = 0; j < actAllTd.length; j++) {
+				if(actAllTd[j].className.indexOf('activeTd') != -1){
+					
+					actPos.unshift(j)
+				}
+			};
+
+			// 活跃块所在的y位置
+			for (var i = 0; i < allTr.length; i++) {
+				
+				if(allTr[i].className === 'activeLine'){
+					actPos.unshift(i)
+				}
+			};
+			gameOut(actPos);
+		}
+		// 游戏 获胜算法
+		function gameOut(actPos){
+			// 生成位置二维数组
+			if(goFirst){
+				personA.push(actPos)
+			}
+			else{
+				personB.push(actPos)
+			}
+
+			for (var i = 0; i < personA.length; i++) {
+				console.log(personA[i]);
+			};
+			// console.log(personB);
+		}
+
+		// 绑定事件
+		function addEvent(element, type, handler) {
+            if (element.addEventListener) {
+                //事件类型、需要执行的函数、是否捕捉
+                element.addEventListener(type, handler, false);
+            } else if (element.attachEvent) {
+                element.attachEvent('on' + type, function() {
+                    handler.call(element);
+                });
+            } else {
+                element['on' + type] = handler;
+            }
+        }
+		// 创建棋盘
+		function creatTable(sectionX,sectionY){
+			let fiveBox = document.createDocumentFragment();
+			let fiveTable = document.createElement('table');
+			let fiveTrLength = sectionX;
+			let fiveTdLength = sectionY;
+
+			for (var i = 0; i < fiveTrLength; i++) {
+				let  fiveTr = document.createElement('tr');
+				for (var j = 0; j < fiveTdLength; j++) {
+					let  fiveTd = document.createElement('td');
+					fiveTr.appendChild(fiveTd) ;
+				};
+				fiveTable.appendChild(fiveTr) ;
+			};
+			return fiveBox.appendChild(fiveTable);
+		}
+		addEvent(fiveSection,'click',doGame);
+
+	</script>
+
+
+
+</body>
+</html>
