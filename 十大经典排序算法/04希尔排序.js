@@ -56,6 +56,7 @@ function shellSortO(arr){
 	};
 	return newArr;
 }
+
 // 排序去重------2
 function shellSortT(arr){
 	var len = arr.length,
@@ -84,6 +85,7 @@ function shellSortT(arr){
 	return newArr;
 }
 
+// 排序去重------3
 function shellSortTS(){
     var len = arr.length,
         temp,
