@@ -56,9 +56,37 @@ function quickSortO(arr, left, right) {
         quickSort(arr, left, partitionIndex-1);
         quickSort(arr, partitionIndex+1, right);
     }
-    return arr;
+     // 去重
+    var newArr = [];
+    for (var i = 0; i < arr.length; i++) {
+        if(newArr.indexOf(arr[i]) == -1){ // 如果不存在重复的则执行，去重！！！！
+            newArr.push(arr[i]);
+        }
+    };
+    return newArr;
 }
+// 排序去重------2
+function quickSortT(arr, left, right) {
+    var len = arr.length,
+        partitionIndex,
+        left = typeof left != 'number' ? 0 : left,
+        right = typeof right != 'number' ? len - 1 : right;
 
+    if (left < right) {
+        partitionIndex = partition(arr, left, right);
+        quickSort(arr, left, partitionIndex-1);
+        quickSort(arr, partitionIndex+1, right);
+    }
+    // 去重
+    let hashObj = {}, newArr = [];
+    for (var i = 0; i < arr.length; i++) {
+        if(!hashObj[arr[i]]){   // 如果hash表中不存在，则组成新数组,去重！！！！
+            hashObj[arr[i]] = true;
+            newArr.push((arr[i]))
+        }
+    };
+    return newArr;
+}
 var arr = [33,22,1,55,3,77,44,22,88,888,22,11,4,2]
 // 选择排序
 // console.log(quickSort(arr));
@@ -67,7 +95,7 @@ var arr = [33,22,1,55,3,77,44,22,88,888,22,11,4,2]
 // 排序去重------2
 // console.log(shellSortT(arr));
 // 排序去重------3
-console.log(quickSortO(arr));
+console.log(quickSortT(arr));
 
 
 
