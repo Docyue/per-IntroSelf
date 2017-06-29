@@ -13,7 +13,6 @@
 
 //  排序
 var len;    // 因为声明的多个函数都需要数据长度，所以把len设置成为全局变量
-
 function buildMaxHeap(arr) {   // 建立大顶堆
     len = arr.length;
     for (var i = Math.floor(len/2); i >= 0; i--) {
@@ -57,6 +56,73 @@ function heapSort(arr) {
     return arr;
 }
 
+// 排序去重------1
+function heapSortO(arr) {
+    buildMaxHeap(arr);
+
+    for (var i = arr.length-1; i > 0; i--) {
+        swap(arr, 0, i);
+        len--;
+        heapify(arr, 0);
+    }
+      // 去重
+    var newArr = [];
+    for (var i = 0; i < arr.length; i++) {
+        if(newArr.indexOf(arr[i]) == -1){ // 如果不存在重复的则执行，去重！！！！
+            newArr.push(arr[i]);
+        }
+    };
+    return newArr;
+}
+
+// 排序去重------2
+function heapSortT(arr) {
+    buildMaxHeap(arr);
+
+    for (var i = arr.length-1; i > 0; i--) {
+        swap(arr, 0, i);
+        len--;
+        heapify(arr, 0);
+    }
+    // 去重
+    let hashObj = {}, newArr = [];
+    for (var i = 0; i < arr.length; i++) {
+        if(!hashObj[arr[i]]){   // 如果hash表中不存在，则组成新数组,去重！！！！
+            hashObj[arr[i]] = true;
+            newArr.push((arr[i]))
+        }
+    };
+    return newArr;
+}
+// 排序去重------3
+function heapSortTS(arr) {
+    buildMaxHeap(arr);
+
+    for (var i = arr.length-1; i > 0; i--) {
+        swap(arr, 0, i);
+        len--;
+        heapify(arr, 0);
+    }
+    // 去重
+    var newArr = [arr[0]];
+
+    for (var i = 1; i < arr.length; i++) {
+        if(newArr.indexOf(arr[i]) == -1){ // 如果不存在则执行，新数组,去重！！！！
+            newArr.push(arr[i])
+        }
+    };
+    return newArr;
+}
+
+var arr = [33,22,1,55,3,77,44,22,88,888,22,11,4,2]
+// 选择排序
+// console.log(heapSort(arr));
+// 排序去重------1
+// console.log(heapSortO(arr));
+// 排序去重------2
+// console.log(heapSortT(arr));
+// 排序去重------3
+console.log(heapSortTS(arr));
 
 
 
