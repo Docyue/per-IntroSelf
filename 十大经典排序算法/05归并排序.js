@@ -164,7 +164,7 @@ function mergeTS(left, right){
 }
 
 var arr = [33,22,1,55,3,77,44,22,88,888,22,11,4,2]
-// 选择排序
+// 归并排序
 // console.log(shellSort(arr));
 // 排序去重------1
 // console.log(shellSortO(arr));

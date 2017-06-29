@@ -12,7 +12,7 @@
 // 3.递归地（recursive）把小于基准值元素的子数列和大于基准值元素的子数列排序；
 // 4.递归的最底部情形，是数列的大小是零或一，也就是永远都已经被排序好了。虽然一直递归下去，但是这个算法总会退出，因为在每次的迭代（iteration）中，它至少会把一个元素摆到它最后的位置去。
 
-//  排序
+//  快速排序
 function quickSort(arr, left, right) {
     var len = arr.length,
         partitionIndex,
@@ -111,7 +111,7 @@ function quickSortTS(arr, left, right) {
     return newArr;
 }
 var arr = [33,22,1,55,3,77,44,22,88,888,22,11,4,2]
-// 选择排序
+// 快速排序
 // console.log(quickSort(arr));
 // 排序去重------1
 // console.log(quickSortO(arr));

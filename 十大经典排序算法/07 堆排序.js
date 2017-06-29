@@ -11,7 +11,7 @@
 // 3.把堆的尺寸缩小 1，并调用 shift_down(0)，目的是把新的数组顶端数据调整到相应位置；
 // 4.重复步骤 2，直到堆的尺寸为 1。
 
-//  排序
+//  堆排序
 var len;    // 因为声明的多个函数都需要数据长度，所以把len设置成为全局变量
 function buildMaxHeap(arr) {   // 建立大顶堆
     len = arr.length;
@@ -65,7 +65,7 @@ function heapSortO(arr) {
         len--;
         heapify(arr, 0);
     }
-      // 去重
+    // 去重
     var newArr = [];
     for (var i = 0; i < arr.length; i++) {
         if(newArr.indexOf(arr[i]) == -1){ // 如果不存在重复的则执行，去重！！！！
@@ -115,7 +115,7 @@ function heapSortTS(arr) {
 }
 
 var arr = [33,22,1,55,3,77,44,22,88,888,22,11,4,2]
-// 选择排序
+// 堆排序
 // console.log(heapSort(arr));
 // 排序去重------1
 // console.log(heapSortO(arr));
