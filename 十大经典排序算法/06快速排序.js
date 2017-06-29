@@ -12,6 +12,7 @@
 // 3.递归地（recursive）把小于基准值元素的子数列和大于基准值元素的子数列排序；
 // 4.递归的最底部情形，是数列的大小是零或一，也就是永远都已经被排序好了。虽然一直递归下去，但是这个算法总会退出，因为在每次的迭代（iteration）中，它至少会把一个元素摆到它最后的位置去。
 
+//  排序
 function quickSort(arr, left, right) {
     var len = arr.length,
         partitionIndex,
@@ -87,15 +88,37 @@ function quickSortT(arr, left, right) {
     };
     return newArr;
 }
+// 排序去重------3
+function quickSortTS(arr, left, right) {
+    var len = arr.length,
+        partitionIndex,
+        left = typeof left != 'number' ? 0 : left,
+        right = typeof right != 'number' ? len - 1 : right;
+
+    if (left < right) {
+        partitionIndex = partition(arr, left, right);
+        quickSort(arr, left, partitionIndex-1);
+        quickSort(arr, partitionIndex+1, right);
+    }
+    // 去重
+    var newArr = [arr[0]];
+
+    for (var i = 1; i < arr.length; i++) {
+        if(newArr.indexOf(arr[i]) == -1){ // 如果不存在则执行，新数组,去重！！！！
+            newArr.push(arr[i])
+        }
+    };
+    return newArr;
+}
 var arr = [33,22,1,55,3,77,44,22,88,888,22,11,4,2]
 // 选择排序
 // console.log(quickSort(arr));
 // 排序去重------1
 // console.log(quickSortO(arr));
 // 排序去重------2
-// console.log(shellSortT(arr));
+// console.log(quickSortT(arr));
 // 排序去重------3
-console.log(quickSortT(arr));
+console.log(quickSortTS(arr));
 
 
 
