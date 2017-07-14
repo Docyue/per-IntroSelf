@@ -19,7 +19,7 @@ console.log(typeof doSomething);            // "function"
 // -4 无法更改this - this功能内部的值不能更改
 // -5 没有arguments对象 - 由于箭头函数没有arguments绑定，您必须依赖命名和休息参数来访问函数参数
 // -6 没有重复的命名参数 - 箭头函数不能在严格或非限制模式下具有重复的命名参数，而不是仅在严格模式下不能具有重复命名参数的非缩略语函数
-
+// ----- ECMAScript 6中功能最大的变化是添加了箭头功能。箭头函数被设计为用于代替匿名函数表达式。箭头函数具有更简洁的语法，词法this绑定，无arguments对象。此外，箭头函数不能更改其this绑定，因此不能用作构造函数。
 // 如果函数没有参数，则必须在声明中包含一组空的括号
 var getName = () => "Nicholas";
 // effectively equivalent to:
