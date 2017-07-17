@@ -70,12 +70,12 @@ let friend = {
         return super.getGreeting() + ", hi!";
     }
 };
-Object.setPrototypeOf(friend, person);
+Object.setPrototypeOf(friend, person); // 修改对象的原型
 // prototype is friend
-let relative = Object.create(friend);
-console.log(person.getGreeting());                  // "Hello"
-console.log(friend.getGreeting());                  // "Hello, hi!"
-console.log(relative.getGreeting());                // "Hello, hi!"
+let relative = Object.create(friend); // 新建对象
+console.log(person.getGreeting());    // "Hello"
+console.log(friend.getGreeting());    // "Hello, hi!"
+console.log(relative.getGreeting());  // "Hello, hi!"
 
 
 
