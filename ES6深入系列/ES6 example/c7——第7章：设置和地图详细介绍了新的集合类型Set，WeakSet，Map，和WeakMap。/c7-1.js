@@ -45,3 +45,15 @@ console.log(set.has(6));    // false
 
 
 // 也可以从集合中删除值。您可以使用该delete()方法删除单个值，也可以通过调用该clear()方法从集合中删除所有值。
+let set = new Set();
+set.add(5);
+set.add("5");
+console.log(set.has(5));    // true
+
+set.delete(5);
+console.log(set.has(5));    // false
+console.log(set.size);      // 1
+
+set.clear();
+console.log(set.has("5"));  // false
+console.log(set.size);      // 0
