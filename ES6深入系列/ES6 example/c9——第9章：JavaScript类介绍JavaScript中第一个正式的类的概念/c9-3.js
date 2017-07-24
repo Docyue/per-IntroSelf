@@ -190,6 +190,81 @@ console.log(x.serialize());             // "{"length":3,"width":3}
 
 
 
+// ----------在Class构造函数中使用new.target
+// 简单的情况下，new.target等于类的构造函数
+class Rectangle {
+    constructor(length, width) {
+        console.log(new.target === Rectangle);
+        this.length = length;
+        this.width = width;
+    }
+}
+
+// new.target is Rectangle
+var obj = new Rectangle(3, 4);      // outputs true
+
+
+
+// 类构造函数无法调用new，因此new.target属性始终在类构造函数中定义
+class Rectangle {
+    constructor(length, width) {
+        console.log(new.target === Rectangle);
+        this.length = length;
+        this.width = width;
+    }
+}
+
+class Square extends Rectangle {
+    constructor(length) {
+        super(length, length)
+    }
+}
+
+// new.target is Square
+var obj = new Square(3);      // outputs false
+
+
+// 通过使用创建一个抽象基类（一个不能被直接实例）new.target
+// abstract base class
+class Shape {
+    constructor() {
+        if (new.target === Shape) {
+            throw new Error("This class cannot be instantiated directly.")
+        }
+    }
+}
+class Rectangle extends Shape {
+    constructor(length, width) {
+        super();
+        this.length = length;
+        this.width = width;
+    }
+}
+var x = new Shape();                // throws error
+var y = new Rectangle(3, 4);        // no error
+console.log(y instanceof Shape);    // true
+
+
+
+// ---------------概要
+// ECMAScript 6类使得JavaScript中的继承更易于使用，因此您不需要摒弃任何现有的对其他语言可能拥有的继承的理解。ECMAScript 6课程开始为ECMAScript 5的经典继承模式的语法糖，但增加了很多功能来减少错误。
+
+// ECMAScript 6类通过在类原型上定义非静态方法来处理原型继承，静态方法最终在构造函数本身。所有方法都是不可枚举的，这个功能可以更好地匹配内置对象的行为，默认情况下，方法通常不能枚举。另外，不能调用类构造函数new，确保不能意外地将类调用为函数。
+
+// 基于类的继承允许您从另一个类，函数或表达式派生一个类。此功能意味着您可以调用函数来确定要继承的正确基数，从而允许您使用mixins和其他不同的合成模式来创建新类。继承工作的方式是继承自内置对象，如Array现在可以并按预期工作。
+
+// 您可以new.target在类构造函数中使用不同的行为，具体取决于类的调用方式。最常见的用法是创建一个抽象基类，直接实例化时会抛出错误，但仍允许通过其他类继承。
+
+// 总体而言，课程是JavaScript的重要补充。它们以安全，一致的方式提供更简洁的语法和更好的功能来定义自定义对象类型。
+
+
+
+
+
+
+
+
+
 
 
 
