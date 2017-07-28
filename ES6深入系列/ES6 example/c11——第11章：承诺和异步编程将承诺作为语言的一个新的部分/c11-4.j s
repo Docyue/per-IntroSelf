@@ -1,0 +1,105 @@
+// -----------响应多个 promise
+// -----Promise.all（）方法
+// 调用Promise.all()创建promise p4，
+// promise 完成p1，p2和p3。传递履行处理程序的结果
+// p4是一个包含每个已解析值的数组：42，43和44.
+// 这些值按promise 传递的顺序存储Promise.all，因此可以将promise 结果与解决的promise 相匹配。
+let p1 = new Promise(function(resolve, reject) {
+    resolve(42);
+});
+let p2 = new Promise(function(resolve, reject) {
+    resolve(43);
+});
+let p3 = new Promise(function(resolve, reject) {
+    resolve(44);
+});
+let p4 = Promise.all([p1, p2, p3]);
+p4.then(function(value) {
+    console.log(Array.isArray(value));  // true
+    console.log(value[0]);              // 42
+    console.log(value[1]);              // 43
+    console.log(value[2]);              // 44
+});
+
+
+// Promise.all() 里任何promise 被拒绝，promise 立即被拒绝，而不等待其他promise完成
+let p5 = new Promise(function(resolve, reject) {
+    resolve(42);
+});
+let p6 = new Promise(function(resolve, reject) {
+    reject(43);
+});
+let p7 = new Promise(function(resolve, reject) {
+    resolve(44);
+});
+let p8 = Promise.all([p5, p6, p7]);
+p8.catch(function(value) {
+    console.log(Array.isArray(value))   // false
+    console.log(value);                 // 43
+});
+
+// -----Promise.race（）方法
+// Promise.race()方法只要满足数组中的任何promsie，就会返回适当的promsie
+let p9 = Promise.resolve(42);
+let p10 = new Promise(function(resolve, reject) {
+    resolve(43);
+});
+let p11 = new Promise(function(resolve, reject) {
+    resolve(44);
+});
+let p12 = Promise.race([p9, p10, p11]);
+p12.then(function(value) {
+    console.log(value);     // 42
+});
+
+// p16 被拒绝，因为被调用p14时已经处于拒绝状态Promise.race()。即使p13 并且p15 被实现，这些结果被忽略，因为它们发生在p14 被拒绝之后
+let p13 = new Promise(function(resolve, reject) {
+    resolve(42);
+});
+let p14 = Promise.reject(43);
+let p15 = new Promise(function(resolve, reject) {
+    resolve(44);
+});
+let p16 = Promise.race([p13, p14, p15]);
+p16.catch(function(value) {
+    console.log(value);     // 43
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
