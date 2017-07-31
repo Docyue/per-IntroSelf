@@ -72,6 +72,82 @@ function tryImport() {
 
 
 
+// ECMAScript 6的import语句为变量，函数和类创建只读绑定，而不是简单地引用原始绑定
+// 如常规变量。即使导入绑定的模块不能更改其值，导出该标识符的模块也可以。
+export var name = "Nicholas";
+export function setName(newName) {
+    name = newName;
+}
+// 引入
+import { name, setName } from "./example.js";
+console.log(name);       // "Nicholas"
+setName("Greg");
+console.log(name);       // "Greg"
+
+name = "Nicholas";       // error
+
+
+// ------重命名出口和进口
+function sum(num1, num2) {
+    return num1 + num2;
+}
+export { sum as add };
+// 引入
+import { add } from "./example.js";
+// 如果导入功能的模块想要使用不同的名称，它也可以使用as
+import { add as sum } from "./example.js";
+console.log(typeof add);            // "undefined"
+console.log(sum(1, 2));             // 3
+
+// ------ 导出 模块中的默认值
+// 方法 1
+export default function(num1, num2) {
+    return num1 + num2;
+}
+// 方法 2
+function sum(num1, num2) {
+    return num1 + num2;
+}
+export default sum;
+// 方法 3
+function sum(num1, num2) {
+    return num1 + num2;
+}
+export { sum as default };
+
+// -----导入默认值
+// import the default
+import sum from "./example.js";
+console.log(sum(1, 2));     // 3
+
+
+// -----导出非默认模块
+// 对于导出默认和一个或多个非默认绑定的模块，您可以使用一个语句导入所有导出的绑定
+export let color = "red";
+export default function(num1, num2) {
+    return num1 + num2;
+}
+// 导入模块
+import sum, { color } from "./example.js";
+console.log(sum(1, 2));     // 3
+console.log(color);         // "red"
+// equivalent to previous example
+import { default as sum, color } from "example";
+console.log(sum(1, 2));     // 3
+console.log(color);         // "red"
+
+// -----如果您想从其他模块导出所有内容
+export * from "./example.js";
+
+
+
+
+
+
+
+
+
+
 
 
 
