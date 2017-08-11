@@ -45,9 +45,9 @@ var promise = new Promise(function(resolve, reject) {
     reject(e);
   }
 });
-promise.catch(function(error) {
-  console.log(error);
-});
+promise.catch(
+  error => console.log(error);
+);
 
 // 写法二
 var promise = new Promise(function(resolve, reject) {
