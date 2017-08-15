@@ -48,3 +48,14 @@ Promise.all([
 .then(([books, user]) => pickTopRecommentations(books, user));
 
 上面代码中，booksPromise和userPromise是两个异步操作，只有等到它们的结果都返回了，才会触发pickTopRecommentations这个回调函数。
+
+
+
+
+
+
+
+
+
+
+
