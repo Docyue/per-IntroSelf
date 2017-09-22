@@ -1,4 +1,4 @@
-【追寻javascript高手之路02】变量、作用域知多少？
+【追寻javascript高手之路02】变量、作用域？
 http://www.cnblogs.com/yexiaochai/p/3160597.html
 
 基本类型与引用类型
@@ -360,5 +360,3 @@ var foo = {
 })(foo.bar)
 
 这道题是上面那条的变形，这道题很耍赖的，各位看看答案是什么呢？
-
-
