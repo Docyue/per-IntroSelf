@@ -1,12 +1,7 @@
-【追寻javascript高手之路01】函数参数知多少？
-
-http://www.cnblogs.com/yexiaochai/p/3160534.html
-
 函数参数
-
+================================================================================
 各位看得没错，我觉得我对函数的参数理解不够彻底，各位怎么样呢，我现在出个例子来试试：
 
-复制代码
 var param = { name: '叶小钗', age: 33 };
 function alertArgurment(d) {
     for (var k in d) {
@@ -14,10 +9,9 @@ function alertArgurment(d) {
     }
 }
 alertArgurment(param);
-复制代码
+
 这个题自然没有问题，那我们变化一下呢？
 
-复制代码
 var param = { name: '叶小钗', age: 33 };
 function alertArgurment(param) {
     for (var k in param ) {
@@ -25,10 +19,8 @@ function alertArgurment(param) {
     }
 }
 alertArgurment(param);
-复制代码
-各位现在知道自己使用的是外面的param还是里面的param呢？若是仍然难不倒你，看看这个呢：
 
-复制代码
+各位现在知道自己使用的是外面的param还是里面的param呢？若是仍然难不倒你，看看这个呢：
 var param = { name: '叶小钗', age: 33 };
 function alertArgurment(d) {
 param.id = '刀狂剑痴';
@@ -37,10 +29,9 @@ param.id = '刀狂剑痴';
     }
 }
 alertArgurment(param);
-复制代码
+
 那么这个呢？或者说这段代码与这段代码有什么不同呢？请对比两段代码：
 
-复制代码
 var param = { name: '叶小钗', age: 33 };
 function alertArgurment(d) {
     d.id = '刀狂剑痴';
@@ -49,15 +40,12 @@ function alertArgurment(d) {
     }
 }
 alertArgurment(param);
-复制代码
 怎么样呢？对于参数各位还敢说知道吗，我反正有点不敢了，于是再看看各位知道下面这些家伙是干什么的吗？
-
 ① arguments
 ② callee
 ③ caller
 若是你都知道并且了解十分深入的话，那么我又在自己为难自己了。。。。好了，上面的问题先留着，我们来看看什么是参数：
 
-复制代码
 ECMAScript函数的参数与其它语言有所不同，其有以下特点：
 ① 个数不限
 ② 类型不限
