@@ -69,7 +69,7 @@ React在组件mounting期间不会调用此方法，只有在一些组件的prop
 当接收新的props或state时，componentWillUpdate()在组件渲染之前被立即调用。使用此函数作为在更新发生之前执行准备的机会。初始渲染不会调用此方法。
 
 注意：这里不能调用this.setState()(如果调用会怎么样？好奇心很重呀，试了一下，会产生死循环，一直更新。。。)。如果我们需要更新state以响应props的更改，我们应该用componentWillReceiveProps()
-
+·
 ------ render()  
 render()方法是react组件必须的，它检查this.props和this.state并且返回一个React元素，我们也可以返回null或false，代表我们不想有任何的渲染。
 
@@ -122,16 +122,6 @@ render()方法应该是一个纯方法，即它不会修改组件的state，在�
     "componentWillUnmount"
 
 
-#### Refs和findDOMNode()  
-为了同浏览器交互，我们有时候需要获取到真实的DOM节点。我们可以通过调用React的React.findDOMNode(component)获取到组件中真实的DOM。
-React.findDOMNode()只在mounted组件中调用，mounted组件就是已经渲染在浏览器DOM结构中的组件。如果你在组件的render()方法中调用React.findDOMNode()就会抛出异常。
-
-
-
-
-
-
-
-
-知道代码该往哪里写，哪些地方不能setState等等。大家可以在上述代码中按自己的意愿来修改，加深理解。
-  文中难免有疏漏，望大家共同交流，批评指正。
+#### Mounted Methods
+  Refs和findDOMNode()()：获取真实的DOM  
+  forceUpdate()：强制更新
