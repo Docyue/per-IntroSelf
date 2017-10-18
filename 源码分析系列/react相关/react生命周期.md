@@ -49,7 +49,7 @@ render()方法应该是一个纯方法，即它不会修改组件的state，在�
 此方法在组件被mounted之后立即被调用，初始化dom节点应该在此方法中，如果需要从远端健在数据，这里是实例化网络请求的好地方，此方法中setState会触发组件重新渲染。
 
 #### Updating
-props和state的改变产生更新。在重新渲染组建时，如下的方法被调用
+props和state的改变产生更新,更新DOM。在重新渲染组建时，如下的方法被调用
 
 ------ componentWillReceiveProps()  
 一个已经mounted的组件接收一个新的props之前componentWillReceiveProps()被调用，如果我们需要更新state来响应prop的更改，我们可以在此方法中比较this.props和nextProps并使用this.setState来更改state。
@@ -122,8 +122,13 @@ render()方法应该是一个纯方法，即它不会修改组件的state，在�
     "componentWillUnmount"
 
 
-#### 结语  
-至此，我们已经很清楚的知道了React组件的生命周期，等到我们写组件的时候就会很清楚的知道代码该往哪里写，哪些地方不能setState等等
+#### Refs和findDOMNode()  
+为了同浏览器交互，我们有时候需要获取到真实的DOM节点。我们可以通过调用React的React.findDOMNode(component)获取到组件中真实的DOM。
+React.findDOMNode()只在mounted组件中调用，mounted组件就是已经渲染在浏览器DOM结构中的组件。如果你在组件的render()方法中调用React.findDOMNode()就会抛出异常。
+
+
+
+
 
 
 
