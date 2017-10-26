@@ -1,0 +1,67 @@
+http请求头的数据量
+
+我们先分析下请求头，看看每次请求都带了那些额外的数据.下面是监控的google的请求头
+    Host www.google.com.hk
+    User-Agent Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3 GTBDFff GTB7.0
+    Accept text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+    Accept-Language zh-cn,en-us;q=0.7,en;q=0.3
+    Accept-Encoding gzip,deflate
+    Accept-Charset ISO-8859-1,utf-8;q=0.7,*;q=0.7
+    Keep-Alive 115
+    Proxy-Connection keep-alive
+--------------------------------------------------------------------------------------------------------
+  返回的response head\
+  Date Sat, 17 Apr 2010 08:18:18 GMT
+  Expires -1
+  Cache-Control private, max-age=0
+  Content-Type text/html; charset=UTF-8
+  Set-Cookie PREF=ID=b94a24e8e90a0f50:NW=1:TM=1271492298:LM=1271492298:S=JH7CxsIx48Zoo8Nn; expires=Mon, 16-Apr-2012 08:18:18 GMT; path=/;    domain=.google.com.hk NID=33=EJVyLQBv2CSgpXQTq8DLIT2JQ4aCAE9YKkU2x-h4hVw_ATrGx7njA69UUBMbzVHVnkAOe_jlGGzOoXhQACSFDP1i53C8hWjRTJd0vYtRNWhGYGv491mwbngkT6LCYbvg; expires=Sun, 17-Oct-2010 08:18:18 GMT; path=/;   domain=.google.com.hk; HttpOnly
+   Content-Encoding gzip
+  Server gws
+  Content-Length 4344
+
+这里发送的请求头的大小大概420 bytes，返回的请求头大概 600 bytes。
+
+可见每次请求都会带上一些额外的信息进行传输(这次请求中还没有带cookie)，当请求的资源很小，比如1个不到1k的图标，可能request带的数据比实际图标的数据量还大;
+所以当请求越多的时候，在网络上传输的数据自然就多，传输速度自然就慢了;
+其实request自带的数据量还是小问题，毕竟request能带的数据量还是有限的。
+
+--------------------------------------------------------------------------------------------------------
+http连接的开销=
+   相比request头部多余的数据，http连接的开销则更加严重。先看看从用户输入1个URL到下载内容到客户端需要经过哪些阶段：
+   1. 域名解析
+   2. 开启TCP连接
+   3. 发送请求
+   4. 等待(主要包括网络延迟和服务器处理时间)
+   5. 下载资源
+可能很多人认为每次请求大部分时间都花在下载资源上，让我们看看blogjava资源下载瀑布图(每种颜色代表的阶段与上面5个阶段对应)：
+  1. 每次请求花费的大部分时间在其他阶段，而不是在下载资源阶段
+  2. 再小的资源照样会花费很多时间在其他阶段，只是下载阶段会比较短(见上图的第6个资源，才284Byte)。
+
+--------------------------------------------------------------------------------------------------------
+如何减少请求数
+  1、合并文件
+     合并文件就是把很多JS文件合并成1个文件，很多CSS文件合并成1个文件，这种方法应该很多人用到过，这里不做详细介绍，
+     只推荐1个合并的工具：yuiCompressor 这个工具yahoo提供的。 http://developer.yahoo.com/yui/compressor/
+
+  2、合并图片
+     这是利用css sprite，通过控制背景图片的位置来显示不同的图片。这种技术也是大家都用过的，不做详细介绍，推荐1个在线合并图片的网站:http://csssprites.com/
+
+  3、把JS、CSS合并到1个文件
+     上面第1种方法说的只是把几个JS文件合并成1个JS文件，几个CSS文件合并成1个CSS文件，哪如何把CSS和JS都合并到1个文件中，见我的另1篇文章:
+     http://www.blogjava.net/BearRui/archive/2010/04/18/combin_css_js.html
+
+  4、使用Image maps
+     Image maps 是把多个图片合并成1个图片，然后使用html中的<map>标签连接图片，并实现点击图片不同的区域执行不同的动作，image map在导航条中比较容易使用到。
+     image map的使用方法见： http://www.w3.org/TR/html401/struct/objects.html#h-13.6
+
+  5、data嵌入图片
+     这种方法把图片进行编码直接嵌入到html中进行使用，以减少HTTP请求，但这个会增加HTML页面的大小，而且这样嵌入的图片不能缓存。见下面这个图片：
+
+    上面的图片就是把图片进行base64编码后使用data:嵌入到html中，代码如下(后面的省略了，大家可以查看源代码看)：
+     <IMG SRC="data:image/gif;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/4QAWRXhpZgAASUkqAAgAA......">
+
+     其中google的视频搜索中，搜索出来的视频缩略图就都是使用嵌入的图片的，见下图：
+
+以上几种方法在都有利有弊，在不同情况下可以选择不同的使用方式，比如使用data嵌入图片虽然减少了请求数，但会增加页面大小。
+所以微软的bing搜索在用户第一次访问的时候使用data嵌入图片，然后后台懒加载真真的图片，以后访问就直接使用缓存的图片，而不使用data。
