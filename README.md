@@ -1,4 +1,4 @@
-# perRecord
+### 你能进到这个项目,说明咱有缘,下面为申明
 1、个人工作中的遇到的一些问题，及自己的解决方案
 
 2、对自己学过的技术的总结
@@ -11,11 +11,10 @@
 
 Location:ShangHai
 
-QQ:442497994 
+QQ:442497994
 
-Mobile：17612176464
+Mobile：15221028650
 
 Weibo：http://weibo.com/1231495297
 
-
-
+Website: http://pernav.com
