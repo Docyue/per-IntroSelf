@@ -7,14 +7,10 @@
 
 4、此处为个人项目，如有引用，概不解释，如有错误，欢迎指正，讨论；
 
-5、个人联系方式
+5、个人联系方式  
 
-Location:ShangHai
-
-QQ:442497994
-
-Mobile：15221028650
-
-Weibo：http://weibo.com/1231495297
-
-Website: http://pernav.com
+    Location: ShangHai  
+    QQ: 442497994  
+    Mobile: 15221028650  
+    Weibo:  http://weibo.com/1231495297  
+    Website:  http://pernav.com
