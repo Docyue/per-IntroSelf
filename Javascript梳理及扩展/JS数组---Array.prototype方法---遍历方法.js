@@ -11,7 +11,7 @@ foreachArr.forEach(function (item, index, array) {
 });
 
 console.log("---------------------every-----------------------");
-// every---测试数组---不修改初始数组，返回测试结果
+// every---遍历数组---不修改初始数组，返回测试结果
 // arr.every(callback[, thisArg])
 // callback 被调用时传入三个参数：元素值，元素的索引，原数组
 function isBigEnough(element, index, array) {
@@ -23,8 +23,8 @@ passed = [12, 54, 18, 130, 44].every(isBigEnough);
 console.log(passed);
 
 console.log("---------------------filter-----------------------");
-// filter---测试数组---不修改初始数组，返回测试成功的数组
-// 用来测试数组的每个元素的函数。
+// filter---遍历数组---不修改初始数组，返回测试成功的数组
+// 用来遍历数组的每个元素的函数。
 // 调用时使用参数 (element, index, array)。返回true表示保留该元素（通过测试），false则不保留
 function isBiggerEnough(value) {
   return value >= 10;
@@ -75,7 +75,7 @@ let flatteneda = [
 console.log(flatteneda); // [4, 5, 2, 3, 0, 1]
 
 console.log("---------------------entries-----------------------");
-// entries---转换数组---不修改初始数组，返回一个新的 Array 迭代器对象，包含每个索引的键和值
+// entries---遍历数组---不修改初始数组，返回一个新的 Array 迭代器对象，包含每个索引的键和值
 var arr = ["a", "b", "c"];
 var iterator = arr.entries();
 console.log(iterator); // Array Iterator {}
@@ -87,7 +87,7 @@ for (let e of iterator) {
 }
 
 console.log("---------------------findIndex-----------------------");
-// findIndex---测试数组---不修改初始数组，返回数组中满足提供的测试函数的第一个元素的索引。否则返回-1。
+// findIndex---遍历数组---不修改初始数组，返回数组中满足提供的测试函数的第一个元素的索引。否则返回-1。
 function isbigaEnough(element) {
   return element >= 15;
 }
@@ -95,7 +95,7 @@ let findIndexresult = [12, 5, 8, 130, 44].findIndex(isbigaEnough);
 console.log(findresult); // 3
 
 console.log("---------------------keys-----------------------");
-// keys---转换数组---不修改初始数组，返回一个新的 Array 迭代器对象,包含每个索引的键
+// keys---遍历数组---不修改初始数组，返回一个新的 Array 迭代器对象,包含每个索引的键
 var keysArr = ["a", "b", "c"];
 var keysiterator = keysArr.keys();
 console.log(keysiterator); // Array keysIterator {}
@@ -104,4 +104,24 @@ for (let e of keysiterator) {
     // [0]
 		// [1]
 		// [2]
+}
+
+
+console.log("---------------------values-----------------------");
+// values---遍历数组---values() 方法返回一个新的 Array Iterator 对象，该对象包含数组每个索引的值。
+let arr = ['w', 'y', 'k', 'o', 'p'];
+let eArr = arr.values();
+// 您的浏览器必须支持 for..of 循环
+// 以及 let —— 将变量作用域限定在 for 循环中
+for (let letter of eArr) {
+  console.log(letter);
+}
+
+console.log("---------------------@@iterator-----------------------");
+// kiteratoreys---遍历数组---arr[Symbol.iterator]() 数组的 iterator 方法，默认情况下与 values() 返回值相同
+let iteratorArr = ['w', 'y', 'k', 'o', 'p'];
+// 您的浏览器必须支持 for..of 循环
+// 以及 let —— 将变量作用域限定在 for 循环中
+for (let letter of iteratorArr) {
+  console.log(letter);
 }
