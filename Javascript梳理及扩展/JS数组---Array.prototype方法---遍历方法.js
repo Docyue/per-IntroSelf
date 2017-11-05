@@ -1,5 +1,5 @@
 // ==============================Array.prototype方法
-// 不改变初始数组(遍历方法)：foreach/every/filter/map/reduce／reduceRight/entries/find/findindex/keys/values/interator/includes
+// 不改变初始数组(遍历方法)：foreach/every/filter/map/reduce／reduceRight/entries/find/findindex/keys/values/interator
 console.log("---------------------forEach-----------------------");
 // forEach---遍历数组
 let foreachArr = ["Cecilie", "Lone"];
