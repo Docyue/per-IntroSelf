@@ -19,14 +19,13 @@ var a = { a: 6 };
 深度克隆：所有元素或属性均完全克隆，并于原引用类型完全独立，即，在后面修改对象的属性的时候，原对象不会被修改。
 hasOwnProperty：是用来判断一个对象是否有你给出名称的属性或对象。不过需要注意的是，此方法无法检查该对象的原型链中是否具有该属性，该属性必须是对象本身的一个成员。
 
-复制代码
 function cloneObj(obj) {
     var o = obj.constructor == Array ? [] : {}; //首先处理变量，看看是数组还是对象啦
     for (var k in obj) {
         //我们知道for in 会将原型的东西也给遍历出来，所以我们这里需要做一个判断
         if (obj.hasOwnProperty(k)) {
             //递归方式处理
-            o[k] = typeof obj[k] === 'objext' ? cloneObj(obj[k]) : obj[k];
+            o[k] = typeof obj[k] === 'object' ? cloneObj(obj[k]) : obj[k];
         }
     }
     return o;
