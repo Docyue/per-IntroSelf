@@ -62,8 +62,8 @@ console.log("---------------------copyWithin-----------------------");
 // arr.copyWithin(target)／arr.copyWithin(target, start)／arr.copyWithin(target, start, end)
 let copyWithinArr = ["alpha", "beta", "copy", "delta"]
 let newcopyWithinArr = copyWithinArr.copyWithin(1, 2, 3);
-console.log("原:");		console.log(copyWithinArr);
-console.log("返回:");	console.log(newcopyWithinArr);
+console.log("原:");		console.log(copyWithinArr);  // ["alpha", "copy", "copy", "delta"]
+console.log("返回:");	console.log(newcopyWithinArr); // ["alpha", "copy", "copy", "delta"]
 
 
 console.log("---------------------fill-----------------------");

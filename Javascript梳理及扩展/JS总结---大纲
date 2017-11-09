@@ -61,7 +61,14 @@ Promise
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 JS跨域
 jsonp原理
-h5里的跨域资源共享
+跨域资源共享
+document.domain + iframe跨域
+location.hash + iframe
+window.name + iframe跨域
+postMessage跨域
+nginx代理跨域
+nodejs中间件代理跨域
+WebSocket协议跨域
 
 --------------------------------------------------------------------------------
 ES6 新语法
