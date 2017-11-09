@@ -7,8 +7,8 @@ let arr = [1,3,5,6,66,9,11,4,5,3,5];
     let actNitem = ""
     let len = arr.length;
     // 数组排序
-    for(var i =0; i< len-1;i++){
-      for(var j =0;j < (len-1)-i;j++){
+    for(var i =0; i< len;i++){
+      for(var j =0;j < (len-i)-1;j++){
         //  指定位置断开
         if(i==n || j==n){
           actNitem = arr[n]
