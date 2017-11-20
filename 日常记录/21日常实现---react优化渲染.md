@@ -12,6 +12,7 @@ react优化性能的几点
 http://baijiahao.baidu.com/s?id=1572403582440776&wfr=spider&for=pc
 react组件性能优化探索实践
 http://www.imweb.io/topic/577512fe732b4107576230b9
-
+MobX 它通过透明的函数响应式编程(transparently applying functional reactive programming - TFRP)使得状态管理变得简单和可扩展。
+http://cn.mobx.js.org/
 多次setState()会不会多次render
 不遍历对比对象变化
