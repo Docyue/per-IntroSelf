@@ -32,3 +32,6 @@ function bar(name, age) {
 
 var bindFoo = bar.bind(foo, 'daisy');
 bindFoo('18');
+bind总结：
+bind() 创建了一个函数，当这个click事件绑定在被调用的时候，它的 this 关键词会被设置成被传入的值（这里指调用bind()时传入的参数）
+bind() 的实现，相当于使用函数在内部包了一个 call / apply ，第二次 bind() 相当于再包住第一次 bind() ,故第二次以后的 bind 是无法生效的。
