@@ -1,0 +1,7 @@
+E[attr]
+E[attr="value"]
+E[attr~="value"]
+E[attr^="value"]
+E[attr$="value"]
+E[attr*="value"]
+E[attr|="value"]
