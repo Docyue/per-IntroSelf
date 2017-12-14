@@ -1,5 +1,4 @@
 #### 用div模拟textarea效果
-================================================================================
 
     HTML代码：
     <div class="test_box" contenteditable="true"><br /></div>
