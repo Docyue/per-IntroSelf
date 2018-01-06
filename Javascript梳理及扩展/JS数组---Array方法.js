@@ -23,7 +23,7 @@ console.log("---------------------from-----------------------");
 // from---创建数组-----从一个类似数组或可迭代的对象中创建一个新的数组实例
 const fromarr = ["a", "b", "c"];
 let newFromarr = Array.from(fromarr);
-console.log(newFromarr);
+console.log(newFromarr); // ["a", "b", "c"]
 
 console.log("---------------------of-----------------------");
 // of---创建数组------创建一个具有可变数量参数的新数组实例，而不考虑参数的数量或类型
