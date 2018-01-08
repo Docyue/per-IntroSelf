@@ -1,6 +1,6 @@
 JS基础---事件循环机制
 ================================================================================
-其中setTimeout和Promise的任务队列叫做macro-task(宏任务)，还有micro-task(微任务）：
+一个线程中，事件循环是唯一的，但是任务队列可以拥有多个，其中setTimeout和Promise的任务队列叫做macro-task(宏任务)，还有micro-task(微任务）：
 macro-task包括：script(整体代码), setTimeout, setInterval, setImmediate, I/O, UI rendering。
 micro-task包括：process.nextTick, Promises, Object.observe, MutationObserver
 
