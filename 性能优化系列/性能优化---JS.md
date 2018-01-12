@@ -17,3 +17,5 @@ http://www.alloyteam.com/2015/05/memory-leak-caused-by-promise/
 http://www.alloyteam.com/2012/11/performance-writing-efficient-javascript/
 8、If-Modified-Since & If-None-Match
 http://wuhua.iteye.com/blog/385451
+9、React 性能優化大挑戰：一次理解 Immutable data 跟 shouldComponentUpdate
+https://blog.techbridge.cc/2018/01/05/react-render-optimization/
